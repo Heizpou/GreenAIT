@@ -6,7 +6,7 @@ from server_lib.workload import Workload
 
 def main():
     # Récupération de l'id du serveur
-    server_id = os.environ.get("ID", "srv_default")
+    server_id = os.environ.get("SERVER_ID", "srv_default")
     
     # Récupération du workload et création du serveur
     workload = Workload()

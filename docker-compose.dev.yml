@@ -1,0 +1,70 @@
+services:
+
+  frontend:
+    container_name: frontend
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports:
+      - "5173:80"
+
+  api-ai:
+    container_name: api-ai
+    build:
+      context: .
+      dockerfile: api-ai/Dockerfile
+    ports:
+      - "5001:5000"
+
+  api-collect-metrics:
+    container_name: api-collect-metrics
+    build:
+      context: .
+      dockerfile: api-collect-metrics/Dockerfile
+    ports:
+      - "5002:80"
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:80
+      - ASPNETCORE_ENVIRONMENT=Development
+
+  api-recommendations:
+    container_name: api-recommendations
+    build:
+      context: .
+      dockerfile: api-recommendations/Dockerfile
+    ports:
+      - "5003:80"
+    environment:
+      - ASPNETCORE_URLS=http://0.0.0.0:80
+      - ASPNETCORE_ENVIRONMENT=Development
+
+  server-simulator-1:
+    container_name: server-simulator-1
+    build:
+      context: .
+      dockerfile: server-simulator/Dockerfile
+    environment:
+      SERVER_ID: "srv1"
+
+  server-simulator-2:
+    container_name: server-simulator-2
+    build:
+      context: .
+      dockerfile: server-simulator/Dockerfile
+    environment:
+      SERVER_ID: "srv2"
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev
+      POSTGRES_DB: greenai_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

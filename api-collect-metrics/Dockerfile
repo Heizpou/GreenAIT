@@ -1,16 +1,15 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copier seulement le .csproj
-COPY api-collect-metrics/*.csproj ./
-RUN dotnet restore
+COPY api-collect-metrics/*.csproj ./api-collect-metrics/
+RUN dotnet restore ./api-collect-metrics
 
-# Copier le reste du code
-COPY api-collect-metrics/. ./
-RUN dotnet publish -c Release -o /app/publish
+COPY api-collect-metrics/. ./api-collect-metrics/
+RUN dotnet publish ./api-collect-metrics -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
+
 COPY --from=build /app/publish .
 
 EXPOSE 80

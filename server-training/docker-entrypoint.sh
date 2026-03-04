@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
-echo "Lancement de l'entrainement RL"
-python -u server-training/ai_train.py
+echo "Lancement server-training"
+
+python -u ai_train.py

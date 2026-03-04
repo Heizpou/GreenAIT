@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
-echo "Lancement de la simulation du serveur $ID"
-python -u server-simulator/runner.py
+echo "Lancement de la simulation du serveur $SERVER_ID"
+
+python -u runner.py
