@@ -59,6 +59,7 @@ pnpm-debug.log*
 *.sln.docstates
 **/TestResults/
 **/*.dbmdl
+appsettings*.json
 
 #################################################
 # ============== NODE / VUE =====================
@@ -89,6 +90,7 @@ pnpm-debug.log*
 
 .vscode/
 **/.vscode/
+**/.vs/
 .idea/
 **/.idea/
 **/.idea/
