@@ -1,0 +1,15 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace        # Supprime les espaces à la fin
+      - id: end-of-file-fixer          # Assure une ligne vide à la fin des fichiers
+      - id: check-yaml                 # Vérifie la syntaxe YAML
+      - id: check-added-large-files    # Bloque les fichiers trop gros
+      - id: check-merge-conflict       # Détecte les conflits Git laissés dans les fichiers
+
+  # Vérifie les secrets et mots de passes
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
