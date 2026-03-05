@@ -3,7 +3,7 @@ services:
   # Traefik (reverse proxy)
   traefik:
     image: traefik:v3.1
-    container_name: traefik
+    container_name: greenait_traefik
     command:
       - "--api.insecure=${TRAEFIK_API_INSECURE}"
       - "--providers.docker=true"
@@ -24,7 +24,7 @@ services:
 
   # Frontend Vue.js
   frontend:
-    container_name: frontend
+    container_name: greenait_frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -38,7 +38,7 @@ services:
 
   # API AI RL
   api-ai:
-    container_name: api-ai
+    container_name: greenait_api-ai
     build:
       context: ./api-ai
       dockerfile: Dockerfile
@@ -47,7 +47,7 @@ services:
 
   # API Collect Metrics
   api-collect-metrics:
-    container_name: api-collect-metrics
+    container_name: greenait_api-collect-metrics
     build:
       context: ./api-collect-metrics
       dockerfile: Dockerfile
@@ -68,7 +68,7 @@ services:
 
   # API Recommendations
   api-recommendations:
-    container_name: api-recommendations
+    container_name: greenait_api-recommendations
     build:
       context: ./api-recommendations
       dockerfile: Dockerfile
@@ -87,7 +87,7 @@ services:
 
   # Server Simulators
   server-simulator-1:
-    container_name: server-simulator-1
+    container_name: greenait_server-simulator-1
     build:
       context: .
       dockerfile: server-simulator/Dockerfile
@@ -99,7 +99,7 @@ services:
       - server-net
 
   server-simulator-2:
-    container_name: server-simulator-2
+    container_name: greenait_server-simulator-2
     build:
       context: .
       dockerfile: server-simulator/Dockerfile
@@ -111,7 +111,7 @@ services:
       - server-net
 
   server-simulator-3:
-    container_name: server-simulator-3
+    container_name: greenait_server-simulator-3
     build:
       context: .
       dockerfile: server-simulator/Dockerfile
@@ -125,7 +125,7 @@ services:
   # PostgreSQL prod
   postgres:
     image: postgres:15-alpine
-    container_name: postgres
+    container_name: greenait_postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -138,7 +138,7 @@ services:
   # Redis
   redis:
     image: redis:7-alpine
-    container_name: redis
+    container_name: greenait_redis
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
     networks:
       - cache-net
