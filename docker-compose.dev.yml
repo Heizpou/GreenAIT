@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
 
   frontend:
@@ -24,8 +26,8 @@ services:
     ports:
       - "5002:80"
     environment:
-      - ASPNETCORE_URLS=http://0.0.0.0:80
-      - ASPNETCORE_ENVIRONMENT=Development
+      ASPNETCORE_URLS: http://0.0.0.0:80
+      ASPNETCORE_ENVIRONMENT: Development
 
   api-recommendations:
     container_name: api-recommendations
@@ -35,8 +37,8 @@ services:
     ports:
       - "5003:80"
     environment:
-      - ASPNETCORE_URLS=http://0.0.0.0:80
-      - ASPNETCORE_ENVIRONMENT=Development
+      ASPNETCORE_URLS: http://0.0.0.0:80
+      ASPNETCORE_ENVIRONMENT: Development
 
   server-simulator-1:
     container_name: server-simulator-1
