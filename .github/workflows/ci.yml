@@ -64,7 +64,7 @@ jobs:
           docker build -t api-ai ./api-ai
           docker build -t api-collect-metrics ./api-collect-metrics
           docker build -t api-recommendations ./api-recommendations
-          docker build -t server-simulator ./server-simulator
+          docker build -t server-simulator .
 
       - name: Run basic tests
         run: |
