@@ -60,11 +60,11 @@ jobs:
 
       - name: Build Docker images
         run: |
-          docker build -t frontend ./frontend
-          docker build -t api-ai ./api-ai
-          docker build -t api-collect-metrics ./api-collect-metrics
-          docker build -t api-recommendations ./api-recommendations
-          docker build -t server-simulator .
+          docker build -t frontend -f ./frontend/Dockerfile ./frontend
+          docker build -t api-ai -f ./api-ai/Dockerfile ./api-ai
+          docker build -t api-collect-metrics -f ./api-collect-metrics/Dockerfile ./api-collect-metrics
+          docker build -t api-recommendations -f ./api-recommendations/Dockerfile ./api-recommendations
+          docker build -t server-simulator -f ./server-simulator/Dockerfile .
 
       - name: Run basic tests
         run: |
