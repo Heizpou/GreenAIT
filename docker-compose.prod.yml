@@ -56,7 +56,7 @@ services:
   # API Collect Metrics
   api-collect-metrics:
     build:
-      context: ./api-collect-metrics
+      context: ./api-collect-metrics/ApiCollectMetrics
       dockerfile: Dockerfile
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:80
@@ -81,7 +81,7 @@ services:
   # API Recommendations
   api-recommendations:
     build:
-      context: ./api-recommendations
+      context: ./api-recommendations/ApiRecommendations
       dockerfile: Dockerfile
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:80
