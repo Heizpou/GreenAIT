@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: dev
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d dev -h localhost"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dev -h postgres || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -15,7 +15,7 @@ services:
   redis:
     image: redis:7-alpine
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli ping || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -29,13 +29,13 @@ services:
         condition: service_healthy
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:80
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_ENVIRONMENT: Production
       DB_USER: postgres
       DB_PASSWORD: password
       DB_NAME: dev
       DB_HOST: postgres
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -51,13 +51,13 @@ services:
         condition: service_healthy
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:80
-      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_ENVIRONMENT: Production
       DB_USER: postgres
       DB_PASSWORD: password
       DB_NAME: dev
       DB_HOST: postgres
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 5
