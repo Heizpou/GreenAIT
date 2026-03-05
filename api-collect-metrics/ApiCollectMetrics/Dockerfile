@@ -14,5 +14,8 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
+# Installer curl
+RUN apt-get update && apt-get install -y curl
+
 EXPOSE 80
 ENTRYPOINT ["dotnet", "ApiCollectMetrics.dll"]

@@ -20,6 +20,9 @@ services:
       timeout: 5s
       retries: 5
 
+  api-ai:
+    image: api-ai
+
   api-collect-metrics:
     image: api-collect-metrics
     ports:
@@ -61,6 +64,3 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-  api-ai:
-    image: api-ai
