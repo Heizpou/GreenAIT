@@ -131,5 +131,4 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /home/deploy/GreenAIT
-            chmod +x ./scripts/deploy.sh
             ./scripts/deploy.sh
