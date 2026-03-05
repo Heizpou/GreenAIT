@@ -2,10 +2,12 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-COPY frontend/package*.json .
+# Copier package.json et package-lock.json pour installer les deps
+COPY package*.json .
 RUN npm install
 
-COPY frontend/ .
+# Copier tout le code depuis le contexte (./frontend)
+COPY . .
 RUN npm run build
 
 # Nginx

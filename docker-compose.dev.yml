@@ -3,7 +3,7 @@ services:
   frontend:
     container_name: frontend
     build:
-      context: .
+      context: ./frontend
       dockerfile: frontend/Dockerfile
     ports:
       - "5173:80"
@@ -11,7 +11,7 @@ services:
   api-ai:
     container_name: api-ai
     build:
-      context: .
+      context: ./api-ai
       dockerfile: api-ai/Dockerfile
     ports:
       - "5001:5000"
@@ -19,7 +19,7 @@ services:
   api-collect-metrics:
     container_name: api-collect-metrics
     build:
-      context: .
+      context: ./api-collect-metrics
       dockerfile: api-collect-metrics/Dockerfile
     ports:
       - "5002:80"
@@ -30,7 +30,7 @@ services:
   api-recommendations:
     container_name: api-recommendations
     build:
-      context: .
+      context: ./api-recommendations
       dockerfile: api-recommendations/Dockerfile
     ports:
       - "5003:80"
@@ -41,7 +41,7 @@ services:
   server-simulator-1:
     container_name: server-simulator-1
     build:
-      context: .
+      context: ./server-simulator
       dockerfile: server-simulator/Dockerfile
     environment:
       SERVER_ID: "srv1"
@@ -49,7 +49,7 @@ services:
   server-simulator-2:
     container_name: server-simulator-2
     build:
-      context: .
+      context: ./server-simulator
       dockerfile: server-simulator/Dockerfile
     environment:
       SERVER_ID: "srv2"
