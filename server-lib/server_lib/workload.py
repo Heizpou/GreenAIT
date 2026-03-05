@@ -12,7 +12,7 @@ class Workload:
         self.step_time()
 
         # Cycle journalier + bruit
-        day_cycle = 50 + 30 * math.sin(2 * math.pi * self.t / 24)
+        day_cycle = 30 + 15 * math.sin(2 * math.pi * self.t / 24)
         noise = random.uniform(-5, 5)
 
         # Pics de charge
