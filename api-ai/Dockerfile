@@ -14,5 +14,5 @@ RUN chmod +x docker-entrypoint.sh
 # Installer curl
 RUN apt-get update && apt-get install -y curl
 
-# Entrypoint
-ENTRYPOINT ["./docker-entrypoint.sh"]
+# CMD
+CMD ["./docker-entrypoint.sh"]
