@@ -1,0 +1,131 @@
+# ci/cd.yml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+
+# =========================
+# CI
+# =========================
+
+  ci:
+    name: Build, Test & Smoke Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      # --- Checkout Repo ---
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # --- Docker info ---
+      - name: Docker info
+        run: |
+          docker version
+          docker info
+
+      # --- Build Docker images ---
+      - name: Build Docker images
+        run: |
+          docker build -t frontend:latest -f ./frontend/Dockerfile ./frontend
+          docker build -t api-ai:latest -f ./api-ai/Dockerfile ./api-ai
+          docker build -t api-collect-metrics:latest -f ./api-collect-metrics/Dockerfile ./api-collect-metrics
+          docker build -t api-recommendations:latest -f ./api-recommendations/Dockerfile ./api-recommendations
+          docker build -t server-simulator:latest -f ./server-simulator/Dockerfile .
+
+      # --- Set up Python ---
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      # --- Set up .NET ---
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      # --- Set up Node.js ---
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # --- Python unit tests ---
+      - name: Run Python unit tests
+        run: |
+          pip install -r api-ai/requirements.txt
+          pip install -r server-simulator/requirements.txt
+          pip install -r server-training/requirements.txt
+          pip install pytest
+          pytest api-ai/tests
+          pytest server-simulator/tests
+          pytest server-training/tests
+
+      # --- .NET unit tests ---
+      - name: Run .NET unit tests
+        run: |
+          dotnet test api-collect-metrics/ApiCollectMetrics.Tests/ApiCollectMetrics.Tests.csproj
+          dotnet test api-recommendations/ApiRecommendations.Tests/ApiRecommendations.Tests.csproj
+
+      # --- Node tests ---
+      - name: Run Node unit tests
+        run: |
+          cd frontend
+          npm ci
+          npm test
+
+      # --- Smoke Tests ---
+      - name: Start containers for smoke tests
+        run: |
+          docker compose -f docker-compose.test.yml up -d --wait
+
+      - name: Smoke test APIs
+        run: |
+          curl -f http://localhost:5002/health
+          curl -f http://localhost:5003/health
+
+      - name: Stop containers
+        run: |
+          docker compose -f docker-compose.test.yml down
+
+      - name: Cleanup docker
+        if: always()
+        run: docker system prune -af
+
+      - name: Debug containers
+        if: failure()
+        run: |
+          docker ps -a
+          docker logs $(docker ps -aq)
+
+# =========================
+# CD
+# =========================
+
+  cd:
+    name: Deploy to VPS
+    needs: ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /home/deploy/GreenAIT
+            ./scripts/deploy.sh

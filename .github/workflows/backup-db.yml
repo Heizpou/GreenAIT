@@ -1,0 +1,29 @@
+name: Backup DB
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *" # Execution tous les jours à 2h du matin
+
+jobs:
+  backup:
+    name: Backup PostgreSQL on VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Backup via SSH
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /home/deploy/GreenAIT
+            ./scripts/backup_db.sh
+
+      - name: Upload backup to GitHub
+        uses: actions/upload-artifact@v3
+        with:
+          name: greenai-db-backup
+          path: /home/deploy/GreenAIT/backups/*.tar.gz
+          retention-days: 7
