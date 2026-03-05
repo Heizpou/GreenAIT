@@ -21,7 +21,7 @@ docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-or
 # Vérification healthchecks
 echo "Vérification des healthchecks"
 rollback=false
-for service in api-ai api-collect-metrics api-recommendations server-simulator; do
+for service in greenait_api-ai greenait_api-collect-metrics greenait_api-recommendations greenait_server-simulator; do
     status=$(docker inspect --format='{{.State.Health.Status}}' "$service")
     echo "$service : $status"
     if [ "$status" != "healthy" ]; then
