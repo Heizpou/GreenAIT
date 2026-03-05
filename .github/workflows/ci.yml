@@ -55,8 +55,8 @@ jobs:
 
       - name: Restore .NET projects
         run: |
-          dotnet restore api-collect-metrics/api-collect-metrics.csproj
-          dotnet restore api-recommendations/api-recommendations.csproj
+          dotnet restore api-collect-metrics/ApiCollectMetrics.csproj
+          dotnet restore api-recommendations/ApiRecommendations.csproj
 
       - name: Build Docker images
         run: |
