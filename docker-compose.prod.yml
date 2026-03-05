@@ -110,11 +110,6 @@ services:
       SERVER_ID: ${SIMULATOR_1_ID}
     networks:
       - server-net
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5000/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
 
   server-simulator-2:
     build:
@@ -124,11 +119,6 @@ services:
       SERVER_ID: ${SIMULATOR_2_ID}
     networks:
       - server-net
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5000/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
 
   server-simulator-3:
     build:
@@ -138,11 +128,6 @@ services:
       SERVER_ID: ${SIMULATOR_3_ID}
     networks:
       - server-net
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5000/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
 
   # PostgreSQL prod
   postgres:

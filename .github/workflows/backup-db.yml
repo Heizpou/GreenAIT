@@ -19,7 +19,6 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /home/deploy/GreenAIT
-            chmod +x ./scripts/backup_db.sh
             ./scripts/backup_db.sh
 
       - name: Upload backup to GitHub
