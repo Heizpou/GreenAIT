@@ -1,10 +1,8 @@
-version: "3.9"
-
 services:
 
   # Traefik (reverse proxy)
   traefik:
-    image: traefik:v2.13
+    image: traefik:v3.1
     container_name: traefik
     command:
       - "--api.insecure=${TRAEFIK_API_INSECURE}"
@@ -29,7 +27,7 @@ services:
     container_name: frontend
     build:
       context: ./frontend
-      dockerfile: frontend/Dockerfile
+      dockerfile: Dockerfile
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`frontend.greenai.com`)"
@@ -43,7 +41,7 @@ services:
     container_name: api-ai
     build:
       context: ./api-ai
-      dockerfile: api-ai/Dockerfile
+      dockerfile: Dockerfile
     networks:
       - ai-net
 
@@ -52,7 +50,7 @@ services:
     container_name: api-collect-metrics
     build:
       context: ./api-collect-metrics
-      dockerfile: api-collect-metrics/Dockerfile
+      dockerfile: Dockerfile
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:80
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
@@ -73,7 +71,7 @@ services:
     container_name: api-recommendations
     build:
       context: ./api-recommendations
-      dockerfile: api-recommendations/Dockerfile
+      dockerfile: Dockerfile
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:80
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
@@ -91,7 +89,7 @@ services:
   server-simulator-1:
     container_name: server-simulator-1
     build:
-      context: ./server-simulator
+      context: .
       dockerfile: server-simulator/Dockerfile
     environment:
       SERVER_ID: ${SIMULATOR_1_ID}
@@ -103,7 +101,7 @@ services:
   server-simulator-2:
     container_name: server-simulator-2
     build:
-      context: ./server-simulator
+      context: .
       dockerfile: server-simulator/Dockerfile
     environment:
       SERVER_ID: ${SIMULATOR_2_ID}
@@ -115,7 +113,7 @@ services:
   server-simulator-3:
     container_name: server-simulator-3
     build:
-      context: ./server-simulator
+      context: .
       dockerfile: server-simulator/Dockerfile
     environment:
       SERVER_ID: ${SIMULATOR_3_ID}
