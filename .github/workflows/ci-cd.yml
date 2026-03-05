@@ -1,5 +1,5 @@
 # ci/cd.yml
-name: CI/CD Pipeline
+name: CI/CD Pipeline Prod
 
 on:
   push:
