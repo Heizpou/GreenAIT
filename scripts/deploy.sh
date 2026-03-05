@@ -1,9 +1,15 @@
 #!/bin/bash
 set -eo pipefail
 
+# Directory
 APP_DIR="/home/deploy/GreenAIT"
 cd "$APP_DIR"
 
+# Charger les variables d'environnement
+echo "Export des variables d'environnement"
+export $(grep -v '^#' .env.prod | xargs)
+
+# Pull depuis le repos
 echo "Pull du repo"
 git pull origin main
 
@@ -21,8 +27,9 @@ docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-or
 # Vérification healthchecks
 echo "Vérification des healthchecks"
 rollback=false
-for service in api-ai api-collect-metrics api-recommendations server-simulator; do
-    status=$(docker inspect --format='{{.State.Health.Status}}' "$service")
+for service in api-ai api-collect-metrics api-recommendations server-simulator-1 server-simulator-2 server-simulator-3; do
+    container_id=$(docker-compose -f docker-compose.prod.yml ps -q $service)
+    status=$(docker inspect --format='{{.State.Health.Status}}' "$container_id" || echo "unavailable")
     echo "$service : $status"
     if [ "$status" != "healthy" ]; then
         echo "$service unhealthy!"
