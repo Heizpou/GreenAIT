@@ -97,7 +97,7 @@ services:
       - db-net
       - ai-net
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
       interval: 10s
       timeout: 3s
       retries: 5
