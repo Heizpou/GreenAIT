@@ -1,102 +1,54 @@
 #!/bin/bash
 set -eo pipefail
 
-# -----------------------------
-# Directory
-# -----------------------------
 APP_DIR="/home/deploy/GreenAIT"
 cd "$APP_DIR"
 
-# -----------------------------
-# Export des variables d'environnement
-# -----------------------------
 echo "Export des variables d'environnement"
-if [ -f .env.prod ]; then
-    export $(grep -v '^#' .env.prod | xargs)
-else
-    echo ".env.prod introuvable !"
-    exit 1
-fi
+export $(grep -v '^#' .env.prod | xargs)
 
-# -----------------------------
-# Pull depuis le repo
-# -----------------------------
 echo "Pull du repo"
 git pull origin main
 
-# -----------------------------
-# Build des images
-# -----------------------------
-echo "Build des images Docker"
-docker-compose -f docker-compose.prod.yml build
-
-# -----------------------------
-# Sauvegarde des images actuelles
-# -----------------------------
+echo "Récupération du commit courant"
 GIT_COMMIT=$(git rev-parse --short HEAD)
-echo "Tagging current images as stable-$GIT_COMMIT"
-for image in api-ai api-collect-metrics api-recommendations server-simulator; do
-    if docker image inspect "$image:latest" >/dev/null 2>&1; then
-        docker tag "$image:latest" "$image:stable-$GIT_COMMIT"
-    else
-        echo "Image $image:latest introuvable, skipping tag"
-    fi
-done
 
-# -----------------------------
-# Déploiement nouvelle version
-# -----------------------------
-echo "Déploiement nouvelle version"
-docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --remove-orphans
+echo "Sauvegarde des images actuelles"
 
-# -----------------------------
-# Vérification des healthchecks
-# -----------------------------
-echo "Vérification des healthchecks"
-rollback=false
-services=(api-ai api-collect-metrics api-recommendations server-simulator-1 server-simulator-2 server-simulator-3)
+docker tag api-ai:latest api-ai:backup-$GIT_COMMIT || true
+docker tag api-collect-metrics:latest api-collect-metrics:backup-$GIT_COMMIT || true
+docker tag api-recommendations:latest api-recommendations:backup-$GIT_COMMIT || true
+docker tag server-simulator:latest server-simulator:backup-$GIT_COMMIT || true
 
-for service in "${services[@]}"; do
-    container_id=$(docker-compose -f docker-compose.prod.yml ps -q "$service")
-    if [ -z "$container_id" ]; then
-        echo "$service : container introuvable"
-        rollback=true
-        continue
-    fi
+echo "Déploiement de la nouvelle version"
 
-    # Attendre que le healthcheck ait une chance de réussir
-    for i in {1..12}; do
-        status=$(docker inspect --format='{{.State.Health.Status}}' "$container_id" || echo "unavailable")
-        if [ "$status" = "healthy" ]; then
-            break
-        fi
-        echo "$service : $status (attente...)"
-        sleep 5
-    done
+if docker compose \
+    --env-file .env.prod \
+    -f docker-compose.prod.yml \
+    up -d --remove-orphans --wait
+then
 
-    status=$(docker inspect --format='{{.State.Health.Status}}' "$container_id" || echo "unavailable")
-    echo "$service : $status"
-    if [ "$status" != "healthy" ]; then
-        echo "$service unhealthy!"
-        rollback=true
-    fi
-done
+    echo "Déploiement réussi : tous les services sont healthy"
 
-# -----------------------------
-# Rollback si nécessaire
-# -----------------------------
-if [ "$rollback" = true ]; then
-    echo "Healthcheck failed! Rollback en cours..."
-    docker-compose -f docker-compose.prod.yml down
-
-    for image in api-ai api-collect-metrics api-recommendations server-simulator; do
-        if docker image inspect "$image:stable-$GIT_COMMIT" >/dev/null 2>&1; then
-            docker tag "$image:stable-$GIT_COMMIT" "$image:latest"
-        fi
-    done
-
-    docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d
-    echo "Rollback terminé"
 else
-    echo "Déploiement OK, tous les services sont healthy"
+
+    echo "Healthcheck échoué → rollback"
+
+    echo "Arrêt des containers"
+    docker compose -f docker-compose.prod.yml down
+
+    echo "Restauration des images précédentes"
+    docker tag api-ai:backup-$GIT_COMMIT api-ai:latest
+    docker tag api-collect-metrics:backup-$GIT_COMMIT api-collect-metrics:latest
+    docker tag api-recommendations:backup-$GIT_COMMIT api-recommendations:latest
+    docker tag server-simulator:backup-$GIT_COMMIT server-simulator:latest
+
+    echo "Redémarrage avec l'ancienne version"
+    docker compose \
+        --env-file .env.prod \
+        -f docker-compose.prod.yml \
+        up -d
+
+    echo "Rollback terminé"
+    exit 1
 fi
