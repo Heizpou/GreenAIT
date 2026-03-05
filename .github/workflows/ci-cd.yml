@@ -37,8 +37,8 @@ jobs:
         run: |
           docker build -t frontend:latest -f ./frontend/Dockerfile ./frontend
           docker build -t api-ai:latest -f ./api-ai/Dockerfile ./api-ai
-          docker build -t api-collect-metrics:latest -f ./api-collect-metrics/Dockerfile ./api-collect-metrics
-          docker build -t api-recommendations:latest -f ./api-recommendations/Dockerfile ./api-recommendations
+          docker build -t api-collect-metrics:latest -f ./api-collect-metrics/ApiCollectMetrics/Dockerfile ./api-collect-metrics
+          docker build -t api-recommendations:latest -f ./api-recommendations/ApiRecommendations/Dockerfile ./api-recommendations
           docker build -t server-simulator:latest -f ./server-simulator/Dockerfile .
 
       # --- Set up Python ---
@@ -97,15 +97,20 @@ jobs:
         run: |
           docker compose -f docker-compose.test.yml down
 
+      # --- Clean de Docker ---
       - name: Cleanup docker
         if: always()
         run: docker system prune -af
 
+      # --- Debug les containers si erreur ---
       - name: Debug containers
         if: failure()
         run: |
           docker ps -a
-          docker logs $(docker ps -aq)
+          for id in $(docker ps -aq); do
+            echo "=== Logs container $id ==="
+            docker logs $id || true
+          done
 
 # =========================
 # CD
