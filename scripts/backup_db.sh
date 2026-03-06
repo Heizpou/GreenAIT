@@ -5,6 +5,11 @@ APP_DIR="/home/deploy/GreenAIT"
 BACKUP_DIR="$APP_DIR/backups"
 COMPOSE_FILE="$APP_DIR/docker-compose.prod.yml"
 
+# Charger les variables d'environnement
+if [ -f "$APP_DIR/.env.prod" ]; then
+  export $(grep -v '^#' "$APP_DIR/.env.prod" | xargs)
+fi
+
 # Récupérer l'ID du container postgres
 CONTAINER_NAME=$(docker-compose -f "$COMPOSE_FILE" ps -q postgres)
 

@@ -27,6 +27,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    image: greenait-frontend:latest
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`heizpou.com`)"
@@ -45,6 +46,7 @@ services:
     build:
       context: ./api-ai
       dockerfile: Dockerfile
+    image: greenait-api-ai:latest
     networks:
       - ai-net
     healthcheck:
@@ -59,6 +61,7 @@ services:
     build:
       context: ./api-collect-metrics/ApiCollectMetrics
       dockerfile: Dockerfile
+    image: greenait-api-collect-metrics:latest
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:80
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
@@ -84,6 +87,7 @@ services:
     build:
       context: ./api-recommendations/ApiRecommendations
       dockerfile: Dockerfile
+    image: greenait-api-recommendations:latest
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:80
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
@@ -107,6 +111,7 @@ services:
     build:
       context: .
       dockerfile: server-simulator/Dockerfile
+    image: greenait-server-simulator-1:latest
     environment:
       SERVER_ID: ${SIMULATOR_1_ID}
     networks:
@@ -116,6 +121,7 @@ services:
     build:
       context: .
       dockerfile: server-simulator/Dockerfile
+    image: greenait-server-simulator-2:latest
     environment:
       SERVER_ID: ${SIMULATOR_2_ID}
     networks:
@@ -125,6 +131,7 @@ services:
     build:
       context: .
       dockerfile: server-simulator/Dockerfile
+    image: greenait-server-simulator-3:latest
     environment:
       SERVER_ID: ${SIMULATOR_3_ID}
     networks:
