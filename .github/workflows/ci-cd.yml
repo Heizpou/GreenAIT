@@ -82,14 +82,25 @@ jobs:
     name: Docker Build & Smoke Tests
     needs: tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
+      # --- Checkout repo ---
       - uses: actions/checkout@v3
+
+      # --- Setup Docker Buildx ---
       - uses: docker/setup-buildx-action@v2
 
-      - name: Build only modified services
+      # --- Docker info for debugging ---
+      - name: Docker info
+        run: docker info
+
+      # --- Build only modified services ---
+      - name: Build Docker images for modified services
         run: |
-          SERVICES=("greenait-frontend" "greenait-api-ai" "greenait-api-collect-metrics" "greenait-api-recommendations" \
-          "greenait-server-simulator-1" "greenait-server-simulator-2" "greenait-server-simulator-3")
+          SERVICES=("greenait-frontend" "greenait-api-ai" "greenait-api-collect-metrics" \
+          "greenait-api-recommendations" "greenait-server-simulator-1" \
+          "greenait-server-simulator-2" "greenait-server-simulator-3")
+
           MODIFIED=()
           for S in "${SERVICES[@]}"; do
             DIR=${S#greenait-}
@@ -97,22 +108,51 @@ jobs:
               MODIFIED+=("$S")
             fi
           done
+
           echo "Modified services: ${MODIFIED[*]}"
+
           if [ ${#MODIFIED[@]} -ne 0 ]; then
-            docker compose -f docker-compose.prod.yml build --pull "${MODIFIED[@]}"
+            for S in "${MODIFIED[@]}"; do
+              case $S in
+                greenait-frontend)
+                  docker build -t api-frontend:latest ./frontend
+                  ;;
+                greenait-api-ai)
+                  docker build -t api-ai:latest ./api-ai
+                  ;;
+                greenait-api-collect-metrics)
+                  docker build -t api-collect-metrics:latest ./api-collect-metrics/ApiCollectMetrics
+                  ;;
+                greenait-api-recommendations)
+                  docker build -t api-recommendations:latest ./api-recommendations/ApiRecommendations
+                  ;;
+                greenait-server-simulator-1|greenait-server-simulator-2|greenait-server-simulator-3)
+                  docker build -t server-simulator:latest ./server-simulator
+                  ;;
+              esac
+            done
+          else
+            echo "No modified services detected. Skipping build."
           fi
 
+      # --- Start smoke test containers ---
       - name: Start smoke test containers
         run: docker compose -f docker-compose.test.yml up -d --wait
 
+      # --- Smoke test APIs ---
       - name: Smoke test APIs
         run: |
+          echo "Testing api-collect-metrics..."
           curl -f http://localhost:5002/health
+          echo "Testing api-recommendations..."
           curl -f http://localhost:5003/health
+          echo "All smoke tests passed ✅"
 
+      # --- Stop smoke test containers ---
       - name: Stop smoke test containers
         run: docker compose -f docker-compose.test.yml down
 
+      # --- Cleanup Docker ---
       - name: Cleanup Docker
         if: always()
         run: docker system prune -af

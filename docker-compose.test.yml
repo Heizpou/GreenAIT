@@ -1,32 +1,52 @@
 services:
-
+  # ---------------- PostgreSQL ----------------
   postgres:
     image: postgres:15-alpine
+    container_name: test-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: dev
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d dev -h postgres || exit 1"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dev -h localhost || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 5
+    ports:
+      - "5432:5432"
 
+  # ---------------- Redis ----------------
   redis:
     image: redis:7-alpine
+    container_name: test-redis
     healthcheck:
       test: ["CMD-SHELL", "redis-cli ping || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 5
-
-  api-ai:
-    image: api-ai
-
-  api-collect-metrics:
-    image: api-collect-metrics
     ports:
-      - "5002:80"
+      - "6379:6379"
+
+  # ---------------- API AI ----------------
+  api-ai:
+    build:
+      context: ./api-ai
+      dockerfile: Dockerfile
+    container_name: test-api-ai
+    depends_on:
+      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------- API Collect Metrics ----------------
+  api-collect-metrics:
+    build:
+      context: ./api-collect-metrics/ApiCollectMetrics
+      dockerfile: Dockerfile
+    container_name: test-api-collect-metrics
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,16 +57,20 @@ services:
       DB_PASSWORD: password
       DB_NAME: dev
       DB_HOST: postgres
+    ports:
+      - "5002:80"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+  # ---------------- API Recommendations ----------------
   api-recommendations:
-    image: api-recommendations
-    ports:
-      - "5003:80"
+    build:
+      context: ./api-recommendations/ApiRecommendations
+      dockerfile: Dockerfile
+    container_name: test-api-recommendations
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,6 +83,8 @@ services:
       DB_PASSWORD: password
       DB_NAME: dev
       DB_HOST: postgres
+    ports:
+      - "5003:80"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
       interval: 5s

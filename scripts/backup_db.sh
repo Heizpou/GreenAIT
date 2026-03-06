@@ -7,17 +7,9 @@ set -e
 APP_DIR="/home/deploy/GreenAIT"
 BACKUP_DIR="$APP_DIR/backups"
 COMPOSE_FILE="$APP_DIR/docker-compose.prod.yml"
-ENV_FILE="$APP_DIR/.env.prod"
 
 TIMESTAMP=$(date +"%Y%m%d%H%M%S")
 MAX_BACKUPS=7
-
-# ----------------------------
-# Charger les variables d'environnement (optionnel)
-# ----------------------------
-if [ -f "$ENV_FILE" ]; then
-  export $(grep -v '^#' "$ENV_FILE" | xargs)
-fi
 
 # ----------------------------
 # Préparer le dossier backup
@@ -34,7 +26,7 @@ echo "===== Backup PostgreSQL ====="
 # ----------------------------
 # Vérifier que le container existe
 # ----------------------------
-CONTAINER_NAME=$(docker-compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps -q postgres)
+CONTAINER_NAME=$(docker-compose -f "$COMPOSE_FILE" ps -q postgres)
 if [ -z "$CONTAINER_NAME" ]; then
   echo "Erreur : container postgres introuvable via docker-compose"
   exit 1
