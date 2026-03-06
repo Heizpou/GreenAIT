@@ -2,73 +2,63 @@
 set -eo pipefail
 
 APP_DIR="/home/deploy/GreenAIT"
+COMPOSE_FILE="$APP_DIR/docker-compose.prod.yml"
+ENV_FILE="$APP_DIR/.env.prod"
+
 cd "$APP_DIR"
 
-echo "Export des variables d'environnement"
-export $(grep -v '^#' .env.prod | xargs)
-
-echo "Pull du repo"
+echo "===== Pull du repo ====="
 git pull origin main
 
-echo "Commit courant"
+# Commit courant
 NEW_COMMIT=$(git rev-parse --short HEAD)
+echo "Commit courant : $NEW_COMMIT"
 
-echo "Commit précédent (pour rollback)"
-PREV_COMMIT=$(docker images greenait-api-ai --format "{{.Tag}}" | grep -v latest | head -n 1 || true)
+# Commit précédent pour rollback
+PREV_COMMIT=$(git rev-parse --short HEAD^ || true)
+echo "Commit précédent pour rollback : $PREV_COMMIT"
 
-echo "Build des images (no cache)"
+# Liste des services à builder/tagger
+SERVICES=(
+  "greenait-api-ai"
+  "greenait-api-collect-metrics"
+  "greenait-api-recommendations"
+  "greenait-server-simulator"
+)
 
-docker compose \
-  --env-file .env.prod \
-  -f docker-compose.prod.yml \
-  build --no-cache
+echo "===== Build des images (no cache) ====="
+docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build --no-cache
 
-echo "Tag des nouvelles images avec le commit"
+echo "===== Tag des nouvelles images ====="
+for SERVICE in "${SERVICES[@]}"; do
+  docker tag "$SERVICE:latest" "$SERVICE:$NEW_COMMIT"
+done
 
-docker tag greenait-api-ai:latest greenait-api-ai:$NEW_COMMIT
-docker tag greenait-api-collect-metrics:latest greenait-api-collect-metrics:$NEW_COMMIT
-docker tag greenait-api-recommendations:latest greenait-api-recommendations:$NEW_COMMIT
-docker tag greenait-server-simulator:latest greenait-server-simulator:$NEW_COMMIT
-
-echo "Déploiement"
-
-if docker compose \
-  --env-file .env.prod \
-  -f docker-compose.prod.yml \
-  up -d --remove-orphans --wait
-then
-
+echo "===== Déploiement ====="
+if docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans --wait; then
   echo "Déploiement réussi"
 
-  echo "Nettoyage des images inutilisées"
+  echo "Nettoyage des images inutilisées..."
   docker image prune -f
 
 else
-
   echo "Healthcheck échoué → rollback"
 
   if [ -n "$PREV_COMMIT" ]; then
+    echo "Rollback vers commit $PREV_COMMIT"
 
-    echo "Rollback vers $PREV_COMMIT"
+    docker compose -f "$COMPOSE_FILE" down
 
-    docker compose -f docker-compose.prod.yml down
+    # Tag rollback
+    for SERVICE in "${SERVICES[@]}"; do
+      docker tag "$SERVICE:$PREV_COMMIT" "$SERVICE:latest"
+    done
 
-    docker tag greenait-api-ai:$PREV_COMMIT greenait-api-ai:latest
-    docker tag greenait-api-collect-metrics:$PREV_COMMIT greenait-api-collect-metrics:latest
-    docker tag greenait-api-recommendations:$PREV_COMMIT greenait-api-recommendations:latest
-    docker tag greenait-server-simulator:$PREV_COMMIT greenait-server-simulator:latest
-
-    docker compose \
-      --env-file .env.prod \
-      -f docker-compose.prod.yml \
-      up -d
+    docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans --wait
 
     echo "Rollback terminé"
-
   else
-
     echo "Aucune image précédente trouvée, rollback impossible"
-
   fi
 
   exit 1
