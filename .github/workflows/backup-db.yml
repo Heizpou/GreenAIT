@@ -26,5 +26,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: greenai-db-backup
-          path: /home/deploy/GreenAIT/backups/*.tar.gz
+          path: /home/deploy/GreenAIT/backups/*.sql.gz
           retention-days: 7
