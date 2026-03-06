@@ -39,6 +39,7 @@ for S in "${SERVICES[@]}"; do
 done
 
 # Déploiement
+docker compose --env-file /dev/null -f "$COMPOSE_FILE" down --remove-orphans
 if docker compose --env-file /dev/null -f "$COMPOSE_FILE" up -d --remove-orphans --wait; then
   echo "Déploiement réussi"
   docker image prune -f
