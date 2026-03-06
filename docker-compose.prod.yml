@@ -1,10 +1,10 @@
 services:
-
-  # Traefik (reverse proxy)
+  # ---------------- Traefik ----------------
   traefik:
     image: traefik:v3.1
+    container_name: traefik
     command:
-      - "--api.dashboard=false"
+      - "--api.dashboard=true"
       - "--api.insecure=false"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
@@ -12,7 +12,7 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - "--certificatesresolvers.le.acme.httpchallenge=true"
       - "--certificatesresolvers.le.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.le.acme.email=contact@heizpou.com"
+      - "--certificatesresolvers.le.acme.email=${LETSENCRYPT_EMAIL}"
       - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
     ports:
       - "80:80"
@@ -25,12 +25,13 @@ services:
       - metrics-net
       - monitoring-net
 
-  # Frontend Vue.js
+  # ---------------- Frontend ----------------
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      target: production
     image: greenait-frontend:latest
+    container_name: greenait-frontend
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`heizpou.com`)"
@@ -46,79 +47,68 @@ services:
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost"]
       interval: 10s
-      timeout: 3s
       retries: 5
 
-  # API AI RL
+  # ---------------- API AI ----------------
   api-ai:
     build:
       context: ./api-ai
-      dockerfile: Dockerfile
+      target: production
     image: greenait-api-ai:latest
+    container_name: greenait-api-ai
     networks:
       - ai-net
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://127.0.0.1:5000/health || exit 1"]
       interval: 15s
-      timeout: 5s
       retries: 5
-      start_period: 10s
 
-  # API Collect Metrics
+  # ---------------- API Collect Metrics ----------------
   api-collect-metrics:
     build:
       context: ./api-collect-metrics/ApiCollectMetrics
-      dockerfile: Dockerfile
+      target: production
     image: greenait-api-collect-metrics:latest
+    container_name: greenait-api-collect-metrics
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:80
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_NAME: ${POSTGRES_DB}
-      DB_HOST: postgres
+      DB_HOST: greenait-postgres
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api-metrics.rule=Host(`metrics.heizpou.com`)"
       - "traefik.http.routers.api-metrics.entrypoints=websecure"
       - "traefik.http.routers.api-metrics.tls.certresolver=le"
-      - "traefik.http.services.api-metrics.loadbalancer.server.port=80"
-      - "traefik.http.routers.api-metrics-http.rule=Host(`metrics.heizpou.com`)"
-      - "traefik.http.routers.api-metrics-http.entrypoints=web"
-      - "traefik.http.routers.api-metrics-http.middlewares=https-redirect"
-      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
     networks:
       - metrics-net
       - db-net
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
       interval: 10s
-      timeout: 3s
       retries: 5
 
-  # API Recommendations
+  # ---------------- API Recommendations ----------------
   api-recommendations:
     build:
       context: ./api-recommendations/ApiRecommendations
-      dockerfile: Dockerfile
+      target: production
     image: greenait-api-recommendations:latest
+    container_name: greenait-api-recommendations
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:80
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_NAME: ${POSTGRES_DB}
-      DB_HOST: postgres
+      DB_HOST: greenait-postgres
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`api.heizpou.com`)"
       - "traefik.http.routers.api.entrypoints=websecure"
       - "traefik.http.routers.api.tls.certresolver=le"
-      - "traefik.http.services.api.loadbalancer.server.port=80"
-      - "traefik.http.routers.api-http.rule=Host(`api.heizpou.com`)"
-      - "traefik.http.routers.api-http.entrypoints=web"
-      - "traefik.http.routers.api-http.middlewares=https-redirect"
-      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
     networks:
       - recommendations-net
       - cache-net
@@ -127,15 +117,15 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
       interval: 10s
-      timeout: 3s
       retries: 5
 
-  # Server Simulators
+  # ---------------- Server Simulators ----------------
   server-simulator-1:
     build:
-      context: .
-      dockerfile: server-simulator/Dockerfile
+      context: ./server-simulator
+      target: production
     image: greenait-server-simulator-1:latest
+    container_name: greenait-server-simulator-1
     environment:
       SERVER_ID: ${SIMULATOR_1_ID}
     networks:
@@ -143,9 +133,10 @@ services:
 
   server-simulator-2:
     build:
-      context: .
-      dockerfile: server-simulator/Dockerfile
+      context: ./server-simulator
+      target: production
     image: greenait-server-simulator-2:latest
+    container_name: greenait-server-simulator-2
     environment:
       SERVER_ID: ${SIMULATOR_2_ID}
     networks:
@@ -153,17 +144,19 @@ services:
 
   server-simulator-3:
     build:
-      context: .
-      dockerfile: server-simulator/Dockerfile
+      context: ./server-simulator
+      target: production
     image: greenait-server-simulator-3:latest
+    container_name: greenait-server-simulator-3
     environment:
       SERVER_ID: ${SIMULATOR_3_ID}
     networks:
       - server-net
 
-  # PostgreSQL prod
-  postgres:
+  # ---------------- PostgreSQL ----------------
+  greenait-postgres:
     image: postgres:15-alpine
+    container_name: greenait-postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -175,12 +168,12 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
-      timeout: 5s
       retries: 5
 
-  # Redis
+  # ---------------- Redis ----------------
   redis:
     image: redis:7-alpine
+    container_name: greenait-redis
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
     networks:
       - cache-net
@@ -188,12 +181,12 @@ services:
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
-      timeout: 3s
       retries: 5
 
-  # Prometheus
+  # ---------------- Prometheus ----------------
   prometheus:
     image: prom/prometheus
+    container_name: greenait-prometheus
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     networks:
@@ -201,9 +194,10 @@ services:
       - metrics-net
       - recommendations-net
 
-  # Grafana
+  # ---------------- Grafana ----------------
   grafana:
     image: grafana/grafana
+    container_name: greenait-grafana
     environment:
       GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
       GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
@@ -219,13 +213,8 @@ services:
       - "traefik.http.routers.grafana.rule=Host(`grafana.heizpou.com`)"
       - "traefik.http.routers.grafana.entrypoints=websecure"
       - "traefik.http.routers.grafana.tls.certresolver=le"
-      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
-      - "traefik.http.routers.grafana-http.rule=Host(`grafana.heizpou.com`)"
-      - "traefik.http.routers.grafana-http.entrypoints=web"
-      - "traefik.http.routers.grafana-http.middlewares=https-redirect"
-      - "traefik.http.middlewares.grafana-auth.basicauth.users=Heizpou:$$apr1$$zrQaWquA$$YNifqD/fiqczGgXLqcf0E."
       - "traefik.http.routers.grafana.middlewares=grafana-auth"
-      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.grafana-auth.basicauth.users=Heizpou:$$apr1$$zrQaWquA$$YNifqD/fiqczGgXLqcf0E."
 
 volumes:
   postgres-data:
@@ -233,10 +222,10 @@ volumes:
 
 networks:
   frontend-net:
-  monitoring-net:
-  metrics-net:
   recommendations-net:
+  metrics-net:
   ai-net:
-  cache-net:
   db-net:
+  cache-net:
   server-net:
+  monitoring-net:
