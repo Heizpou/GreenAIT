@@ -23,7 +23,9 @@ SERVICES=(
   "greenait-api-ai"
   "greenait-api-collect-metrics"
   "greenait-api-recommendations"
-  "greenait-server-simulator"
+  "greenait-server-simulator-1"
+  "greenait-server-simulator-2"
+  "greenait-server-simulator-3"
 )
 
 echo "===== Build des images (no cache) ====="
