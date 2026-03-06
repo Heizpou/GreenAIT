@@ -37,7 +37,10 @@ echo "Sauvegarde de la DB ${POSTGRES_DB}..."
 # ----------------------------
 # Dump directement depuis le container
 # ----------------------------
-docker exec -i "$CONTAINER_NAME" pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" | gzip > "$BACKUP_FILE"
+docker exec -i "$CONTAINER_NAME" pg_dump -h localhost -U "$POSTGRES_USER" "$POSTGRES_DB" | gzip > "$BACKUP_FILE"
+
+echo "Fichier latest.sql.gz présent ?"
+ls -l "$LATEST_BACKUP"
 
 # ----------------------------
 # Créer / mettre à jour latest.sql.gz

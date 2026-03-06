@@ -57,20 +57,16 @@ jobs:
             export SIMULATOR_3_ID=${{ env.SIMULATOR_3_ID }}
             ./scripts/backup_db.sh
 
-      # Étape 2 : Récupérer le backup depuis le VPS
+      # Etape 2 : Copie de la backup
       - name: Download backup from VPS
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: "/home/deploy/GreenAIT/backups/latest.sql.gz"
-          target: "./backups"
+        run: |
+          mkdir -p ./backups
+          scp -i ${{ secrets.VPS_SSH_KEY }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/deploy/GreenAIT/backups/latest.sql.gz ./backups/latest.sql.gz
 
       # Étape 3 : Upload vers GitHub Actions
       - name: Upload backup to GitHub
         uses: actions/upload-artifact@v4
         with:
           name: greenai-db-backup
-          path: ./backups/*.sql.gz
+          path: ./backups/latest.sql.gz
           retention-days: 7
