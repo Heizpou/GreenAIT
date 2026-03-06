@@ -106,7 +106,7 @@ services:
       DB_HOST: greenait-postgres
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`api.heizpou.com`)"
+      - "traefik.http.routers.api.rule=Host(`recommendations.heizpou.com`)"
       - "traefik.http.routers.api.entrypoints=websecure"
       - "traefik.http.routers.api.tls.certresolver=le"
     networks:
