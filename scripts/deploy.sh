@@ -38,8 +38,13 @@ for S in "${SERVICES[@]}"; do
   docker tag "$S:latest" "$S:$NEW_COMMIT"
 done
 
+# Down des containers
+echo "Down des containers et suppression de Traefik"
+docker rm -f traefik || true
+docker compose --env-file /dev/null -f "$COMPOSE_FILE" up -d --remove-orphans --wait
+
 # Déploiement
-docker compose --env-file /dev/null -f "$COMPOSE_FILE" down --remove-orphans --wait
+echo "Déploiement des nouveaux containers"
 if docker compose --env-file /dev/null -f "$COMPOSE_FILE" up -d --remove-orphans --wait; then
   echo "Déploiement réussi"
   docker image prune -f
