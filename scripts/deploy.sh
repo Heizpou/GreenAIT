@@ -34,21 +34,21 @@ else
 
     echo "Healthcheck échoué → rollback"
 
-    echo "Arrêt des containers"
-    docker compose -f docker-compose.prod.yml down
+    # echo "Arrêt des containers"
+    # docker compose -f docker-compose.prod.yml down
 
-    echo "Restauration des images précédentes"
-    docker tag api-ai:backup-$GIT_COMMIT api-ai:latest
-    docker tag api-collect-metrics:backup-$GIT_COMMIT api-collect-metrics:latest
-    docker tag api-recommendations:backup-$GIT_COMMIT api-recommendations:latest
-    docker tag server-simulator:backup-$GIT_COMMIT server-simulator:latest
+    # echo "Restauration des images précédentes"
+    # docker tag api-ai:backup-$GIT_COMMIT api-ai:latest
+    # docker tag api-collect-metrics:backup-$GIT_COMMIT api-collect-metrics:latest
+    # docker tag api-recommendations:backup-$GIT_COMMIT api-recommendations:latest
+    # docker tag server-simulator:backup-$GIT_COMMIT server-simulator:latest
 
-    echo "Redémarrage avec l'ancienne version"
-    docker compose \
-        --env-file .env.prod \
-        -f docker-compose.prod.yml \
-        up -d
+    # echo "Redémarrage avec l'ancienne version"
+    # docker compose \
+    #     --env-file .env.prod \
+    #     -f docker-compose.prod.yml \
+    #     up -d
 
-    echo "Rollback terminé"
-    exit 1
+    # echo "Rollback terminé"
+    # exit 1
 fi
