@@ -104,6 +104,7 @@ appsettings*.json
 docker-compose.override.yml
 **/docker-compose.override.yml
 **/docker-data/
+**/letsencrypt/
 
 #################################################
 # ============== CI / MISC ======================

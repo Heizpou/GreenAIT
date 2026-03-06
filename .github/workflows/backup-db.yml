@@ -38,7 +38,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "/home/deploy/GreenAIT/backups/*.sql.gz"
+          source: "/home/deploy/GreenAIT/backups/latest.sql.gz"
           target: "./backups"
 
       # Étape 3 : Upload vers GitHub Actions

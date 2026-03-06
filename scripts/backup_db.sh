@@ -16,7 +16,11 @@ fi
 
 mkdir -p "$BACKUP_DIR"
 
+# Nom du backup horodaté
 BACKUP_FILE="$BACKUP_DIR/${POSTGRES_DB}_${TIMESTAMP}.sql.gz"
+
+# Nom du backup "dernier" pour GitHub Actions / SCP
+LATEST_BACKUP="$BACKUP_DIR/latest.sql.gz"
 
 echo "===== Backup PostgreSQL ====="
 
@@ -33,10 +37,14 @@ echo "Sauvegarde de la DB ${POSTGRES_DB}..."
 docker-compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" exec -T postgres \
   pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" | gzip > "$BACKUP_FILE"
 
-echo "Backup créé : $BACKUP_FILE"
+# Créer ou mettre à jour le fichier latest.sql.gz
+cp -f "$BACKUP_FILE" "$LATEST_BACKUP"
 
-# Rotation des backups
+echo "Backup créé : $BACKUP_FILE"
+echo "Backup 'latest' mis à jour : $LATEST_BACKUP"
+
+# Rotation des backups horodatés (garder seulement les 7 derniers)
 echo "Nettoyage des anciens backups..."
-ls -t "$BACKUP_DIR"/*.sql.gz 2>/dev/null | tail -n +$((MAX_BACKUPS + 1)) | xargs -r rm
+ls -t "$BACKUP_DIR"/*.sql.gz 2>/dev/null | grep -v "latest\.sql\.gz" | tail -n +$((MAX_BACKUPS + 1)) | xargs -r rm
 
 echo "Backup terminé avec succès !"
