@@ -30,7 +30,7 @@ if [ ${#MODIFIED_SERVICES[@]} -eq 0 ]; then
   echo "Aucun service modifié → utilisation des images existantes"
 else
   echo "Services à rebuild : ${MODIFIED_SERVICES[*]}"
-  docker compose -f "$COMPOSE_FILE" build --pull "${MODIFIED_SERVICES[@]}"
+  docker compose --env-file /dev/null -f "$COMPOSE_FILE" build --pull "${MODIFIED_SERVICES[@]}"
 fi
 
 # Tag commit pour rollback
@@ -39,17 +39,17 @@ for S in "${SERVICES[@]}"; do
 done
 
 # Déploiement
-if docker compose -f "$COMPOSE_FILE" up -d --remove-orphans --wait; then
+if docker compose --env-file /dev/null -f "$COMPOSE_FILE" up -d --remove-orphans --wait; then
   echo "Déploiement réussi"
   docker image prune -f
 else
   echo "Healthcheck échoué, rollback"
   if [ -n "$PREV_COMMIT" ]; then
-    docker compose -f "$COMPOSE_FILE" down
+    docker compose --env-file /dev/null -f "$COMPOSE_FILE" down
     for S in "${SERVICES[@]}"; do
       docker tag "$S:$PREV_COMMIT" "$S:latest"
     done
-    docker compose -f "$COMPOSE_FILE" up -d --remove-orphans --wait
+    docker compose --env-file /dev/null -f "$COMPOSE_FILE" up -d --remove-orphans --wait
     echo "Rollback terminé"
   else
     echo "❌ Aucun commit précédent → rollback impossible"

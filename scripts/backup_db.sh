@@ -26,7 +26,7 @@ echo "===== Backup PostgreSQL ====="
 # ----------------------------
 # Vérifier que le container existe
 # ----------------------------
-CONTAINER_NAME=$(docker-compose -f "$COMPOSE_FILE" ps -q postgres)
+CONTAINER_NAME=$(docker-compose --env-file /dev/null -f "$COMPOSE_FILE" ps -q postgres)
 if [ -z "$CONTAINER_NAME" ]; then
   echo "Erreur : container postgres introuvable via docker-compose"
   exit 1
