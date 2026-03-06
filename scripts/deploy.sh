@@ -10,27 +10,66 @@ export $(grep -v '^#' .env.prod | xargs)
 echo "Pull du repo"
 git pull origin main
 
-echo "Récupération du commit courant"
-GIT_COMMIT=$(git rev-parse --short HEAD)
+echo "Commit courant"
+NEW_COMMIT=$(git rev-parse --short HEAD)
 
-echo "Sauvegarde des images actuelles"
+echo "Commit précédent (pour rollback)"
+PREV_COMMIT=$(docker images greenait-api-ai --format "{{.Tag}}" | grep -v latest | head -n 1 || true)
 
-docker tag api-ai api-ai:backup-$GIT_COMMIT || true
-docker tag api-collect-metrics api-collect-metrics:backup-$GIT_COMMIT || true
-docker tag api-recommendations api-recommendations:backup-$GIT_COMMIT || true
-docker tag server-simulator server-simulator:backup-$GIT_COMMIT || true
+echo "Build des images (no cache)"
 
-echo "Déploiement de la nouvelle version"
+docker compose \
+  --env-file .env.prod \
+  -f docker-compose.prod.yml \
+  build --no-cache
+
+echo "Tag des nouvelles images avec le commit"
+
+docker tag greenait-api-ai:latest greenait-api-ai:$NEW_COMMIT
+docker tag greenait-api-collect-metrics:latest greenait-api-collect-metrics:$NEW_COMMIT
+docker tag greenait-api-recommendations:latest greenait-api-recommendations:$NEW_COMMIT
+docker tag greenait-server-simulator:latest greenait-server-simulator:$NEW_COMMIT
+
+echo "Déploiement"
 
 if docker compose \
-    --env-file .env.prod \
-    -f docker-compose.prod.yml \
-    up -d --remove-orphans --wait
+  --env-file .env.prod \
+  -f docker-compose.prod.yml \
+  up -d --remove-orphans --wait
 then
 
-    echo "Déploiement réussi : tous les services sont healthy"
+  echo "Déploiement réussi"
+
+  echo "Nettoyage des images inutilisées"
+  docker image prune -f
 
 else
 
-    echo "Healthcheck échoué → rollback"
+  echo "Healthcheck échoué → rollback"
+
+  if [ -n "$PREV_COMMIT" ]; then
+
+    echo "Rollback vers $PREV_COMMIT"
+
+    docker compose -f docker-compose.prod.yml down
+
+    docker tag greenait-api-ai:$PREV_COMMIT greenait-api-ai:latest
+    docker tag greenait-api-collect-metrics:$PREV_COMMIT greenait-api-collect-metrics:latest
+    docker tag greenait-api-recommendations:$PREV_COMMIT greenait-api-recommendations:latest
+    docker tag greenait-server-simulator:$PREV_COMMIT greenait-server-simulator:latest
+
+    docker compose \
+      --env-file .env.prod \
+      -f docker-compose.prod.yml \
+      up -d
+
+    echo "Rollback terminé"
+
+  else
+
+    echo "Aucune image précédente trouvée, rollback impossible"
+
+  fi
+
+  exit 1
 fi

@@ -22,7 +22,7 @@ jobs:
             ./scripts/backup_db.sh
 
       - name: Upload backup to GitHub
-        uses: actions/upload-artifact@v4.4
+        uses: actions/upload-artifact@v4
         with:
           name: greenai-db-backup
           path: /home/deploy/GreenAIT/backups/*.tar.gz
