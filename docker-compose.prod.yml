@@ -68,8 +68,8 @@ services:
   # ---------------- API Collect Metrics ----------------
   api-collect-metrics:
     build:
-      context: ./api-collect-metrics/ApiCollectMetrics
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api-collect-metrics/ApiCollectMetrics/Dockerfile
     image: greenait-api-collect-metrics:latest
     container_name: greenait-api-collect-metrics
     environment:
@@ -97,8 +97,8 @@ services:
   # ---------------- API Recommendations ----------------
   api-recommendations:
     build:
-      context: ./api-recommendations/ApiRecommendations
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api-recommendations/ApiRecommendations/Dockerfile
     image: greenait-api-recommendations:latest
     container_name: greenait-api-recommendations
     environment:
@@ -132,10 +132,26 @@ services:
       dockerfile: server-simulator/Dockerfile
     image: greenait-server-simulator-1:latest
     container_name: greenait-server-simulator-1
+    depends_on:
+      - api-collect-metrics
     environment:
       SERVER_ID: ${SIMULATOR_1_ID}
+      METRICS_API_URL: "http://greenait-api-collect-metrics/api/metrics"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sim-1.rule=Host(`sim1.heizpou.com`)"
+      - "traefik.http.routers.sim-1.entrypoints=websecure"
+      - "traefik.http.routers.sim-1.tls.certresolver=le"
+      - "traefik.http.services.sim-1.loadbalancer.server.port=8080"
+      - "traefik.docker.network=greenait-metrics-net"
     networks:
-      - server-net
+      - traefik-public
+      - metrics-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/status || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
   server-simulator-2:
     build:
@@ -143,10 +159,26 @@ services:
       dockerfile: server-simulator/Dockerfile
     image: greenait-server-simulator-2:latest
     container_name: greenait-server-simulator-2
+    depends_on:
+      - api-collect-metrics
     environment:
       SERVER_ID: ${SIMULATOR_2_ID}
+      METRICS_API_URL: "http://greenait-api-collect-metrics/api/metrics"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sim-2.rule=Host(`sim2.heizpou.com`)"
+      - "traefik.http.routers.sim-2.entrypoints=websecure"
+      - "traefik.http.routers.sim-2.tls.certresolver=le"
+      - "traefik.http.services.sim-2.loadbalancer.server.port=8080"
+      - "traefik.docker.network=greenait-metrics-net"
     networks:
-      - server-net
+      - traefik-public
+      - metrics-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/status || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
   server-simulator-3:
     build:
@@ -154,10 +186,26 @@ services:
       dockerfile: server-simulator/Dockerfile
     image: greenait-server-simulator-3:latest
     container_name: greenait-server-simulator-3
+    depends_on:
+      - api-collect-metrics
     environment:
       SERVER_ID: ${SIMULATOR_3_ID}
+      METRICS_API_URL: "http://greenait-api-collect-metrics/api/metrics"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sim-3.rule=Host(`sim3.heizpou.com`)"
+      - "traefik.http.routers.sim-3.entrypoints=websecure"
+      - "traefik.http.routers.sim-3.tls.certresolver=le"
+      - "traefik.http.services.sim-3.loadbalancer.server.port=8080"
+      - "traefik.docker.network=greenait-metrics-net"
     networks:
-      - server-net
+      - traefik-public
+      - metrics-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/status || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
   # ---------------- PostgreSQL ----------------
   greenait-postgres:
@@ -242,7 +290,5 @@ networks:
     name: greenait-db-net
   cache-net:
     name: greenait-cache-net
-  server-net:
-    name: greenait-server-net
   monitoring-net:
     name: greenait-monitoring-net

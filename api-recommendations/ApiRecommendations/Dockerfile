@@ -1,22 +1,25 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copier le .csproj pour restaurer les dépendances
-COPY *.csproj ./
-RUN dotnet restore
+# Lib partagée (layer cacheable)
+COPY shared/GreenAIT.Data/ ./shared/GreenAIT.Data/
 
-# Copier tout le code
-COPY . ./
-RUN dotnet publish -c Release -o /app/publish
+# .csproj pour restore (layer cacheable)
+COPY api-recommendations/ApiRecommendations/ApiRecommendations.csproj ./api-recommendations/ApiRecommendations/
+RUN dotnet restore ./api-recommendations/ApiRecommendations/ApiRecommendations.csproj
+
+# Code source
+COPY api-recommendations/ApiRecommendations/ ./api-recommendations/ApiRecommendations/
+RUN dotnet publish ./api-recommendations/ApiRecommendations/ApiRecommendations.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 
-# Copier le build publié
 COPY --from=build /app/publish .
 
-# Installer curl
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl \
+ && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 80
 ENTRYPOINT ["dotnet", "ApiRecommendations.dll"]
