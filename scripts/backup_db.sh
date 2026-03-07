@@ -21,24 +21,29 @@ BACKUP_FILE="$BACKUP_DIR/${POSTGRES_DB}_${TIMESTAMP}.sql.gz"
 # Backup fixe pour GitHub Actions / SCP
 LATEST_BACKUP="$BACKUP_DIR/latest.sql.gz"
 
-echo "===== Backup PostgreSQL ====="
-echo "Sauvegarde de la DB ${POSTGRES_DB}..."
-
 # ----------------------------
 # Dump directement depuis le container
 # ----------------------------
-docker exec -i greenait-postgres pg_dump -h -U "$POSTGRES_USER" "$POSTGRES_DB" | gzip > "$BACKUP_FILE"
+echo "===== Backup PostgreSQL ====="
+echo "Sauvegarde de la DB ${POSTGRES_DB}..."
 
-echo "Fichier latest.sql.gz présent ?"
-ls -l "$LATEST_BACKUP"
+docker exec greenait-postgres \
+  pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" | gzip > "$BACKUP_FILE"
 
-# ----------------------------
-# Créer / mettre à jour latest.sql.gz
-# ----------------------------
+# Vérifie la création du dump
+if [ ! -s "$BACKUP_FILE" ]; then
+  echo "Backup échoué"
+  exit 1
+fi
+
+# Mettre à jour latest
 cp -f "$BACKUP_FILE" "$LATEST_BACKUP"
 
 echo "Backup créé : $BACKUP_FILE"
 echo "Backup 'latest' mis à jour : $LATEST_BACKUP"
+
+echo "Fichier latest.sql.gz présent ?"
+ls -l "$LATEST_BACKUP"
 
 # ----------------------------
 # Rotation des anciens backups (garder les 7 derniers)
