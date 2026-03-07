@@ -1,0 +1,103 @@
+name: Staging CI/CD
+
+on:
+  push:
+    branches: [staging]
+
+permissions:
+  contents: read
+
+env:
+  ASPNETCORE_ENVIRONMENT: production
+  STAGING_POSTGRES_USER: ${{ secrets.STAGING_POSTGRES_USER }}
+  STAGING_POSTGRES_PASSWORD: ${{ secrets.STAGING_POSTGRES_PASSWORD }}
+  STAGING_POSTGRES_DB: ${{ secrets.STAGING_POSTGRES_DB }}
+  STAGING_REDIS_PASSWORD: ${{ secrets.STAGING_REDIS_PASSWORD }}
+  LETSENCRYPT_EMAIL: ${{ secrets.LETSENCRYPT_EMAIL }}
+  STAGING_GF_SECURITY_ADMIN_USER: ${{ secrets.STAGING_GF_SECURITY_ADMIN_USER }}
+  STAGING_GF_SECURITY_ADMIN_PASSWORD: ${{ secrets.STAGING_GF_SECURITY_ADMIN_PASSWORD }}
+  STAGING_SIMULATOR_1_ID: ${{ secrets.STAGING_SIMULATOR_1_ID }}
+  STAGING_SIMULATOR_2_ID: ${{ secrets.STAGING_SIMULATOR_2_ID }}
+  STAGING_SIMULATOR_3_ID: ${{ secrets.STAGING_SIMULATOR_3_ID }}
+
+jobs:
+
+  # ---------------- Tests parallèles ----------------
+  tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        job: [python, dotnet, node]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Python
+        if: matrix.job == 'python'
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Run Python tests
+        if: matrix.job == 'python'
+        run: |
+          pip install -r api-ai/requirements.txt
+          pip install -r server-simulator/requirements.txt
+          pip install pytest
+          pytest api-ai/tests
+          pytest server-simulator/tests
+
+      - name: .NET
+        if: matrix.job == 'dotnet'
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Run .NET tests
+        if: matrix.job == 'dotnet'
+        run: |
+          dotnet test api-collect-metrics/ApiCollectMetrics.Tests/ApiCollectMetrics.Tests.csproj
+          dotnet test api-recommendations/ApiRecommendations.Tests/ApiRecommendations.Tests.csproj
+
+      - name: Node
+        if: matrix.job == 'node'
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Run Node tests
+        if: matrix.job == 'node'
+        run: |
+          cd frontend
+          npm ci
+          npm test
+
+  # ---------------- Deploy Staging ----------------
+  deploy-staging:
+    name: Deploy to Staging
+    needs: tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /home/deploy/GreenAIT
+            export ASPNETCORE_ENVIRONMENT=${{ env.ASPNETCORE_ENVIRONMENT }}
+            export STAGING_POSTGRES_USER=${{ env.STAGING_POSTGRES_USER }}
+            export STAGING_POSTGRES_PASSWORD=${{ env.STAGING_POSTGRES_PASSWORD }}
+            export STAGING_POSTGRES_DB=${{ env.STAGING_POSTGRES_DB }}
+            export STAGING_REDIS_PASSWORD=${{ env.STAGING_REDIS_PASSWORD }}
+            export LETSENCRYPT_EMAIL=${{ env.LETSENCRYPT_EMAIL }}
+            export STAGING_GF_SECURITY_ADMIN_USER=${{ env.STAGING_GF_SECURITY_ADMIN_USER }}
+            export STAGING_GF_SECURITY_ADMIN_PASSWORD=${{ env.STAGING_GF_SECURITY_ADMIN_PASSWORD }}
+            export STAGING_SIMULATOR_1_ID=${{ env.STAGING_SIMULATOR_1_ID }}
+            export STAGING_SIMULATOR_2_ID=${{ env.STAGING_SIMULATOR_2_ID }}
+            export STAGING_SIMULATOR_3_ID=${{ env.STAGING_SIMULATOR_3_ID }}
+            ./scripts/deploy-staging.sh

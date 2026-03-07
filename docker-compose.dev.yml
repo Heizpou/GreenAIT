@@ -4,7 +4,7 @@ services:
     container_name: frontend
     build:
       context: ./frontend
-      dockerfile: frontend/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "5173:80"
 
@@ -12,37 +12,53 @@ services:
     container_name: api-ai
     build:
       context: ./api-ai
-      dockerfile: api-ai/Dockerfile
+      dockerfile: Dockerfile
     ports:
       - "5001:5000"
 
   api-collect-metrics:
     container_name: api-collect-metrics
     build:
-      context: ./api-collect-metrics
-      dockerfile: api-collect-metrics/Dockerfile
+      context: ./api-collect-metrics/ApiCollectMetrics
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
     ports:
       - "5002:80"
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:80
       ASPNETCORE_ENVIRONMENT: Development
+      DB_USER: dev
+      DB_PASSWORD: dev
+      DB_NAME: greenai_dev
+      DB_HOST: postgres
 
   api-recommendations:
     container_name: api-recommendations
     build:
-      context: ./api-recommendations
-      dockerfile: api-recommendations/Dockerfile
+      context: ./api-recommendations/ApiRecommendations
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - "5003:80"
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:80
       ASPNETCORE_ENVIRONMENT: Development
+      DB_USER: dev
+      DB_PASSWORD: dev
+      DB_NAME: greenai_dev
+      DB_HOST: postgres
 
   server-simulator-1:
     container_name: server-simulator-1
     build:
       context: ./server-simulator
-      dockerfile: server-simulator/Dockerfile
+      dockerfile: Dockerfile
     environment:
       SERVER_ID: "srv1"
 
@@ -50,7 +66,7 @@ services:
     container_name: server-simulator-2
     build:
       context: ./server-simulator
-      dockerfile: server-simulator/Dockerfile
+      dockerfile: Dockerfile
     environment:
       SERVER_ID: "srv2"
 
@@ -65,6 +81,23 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d greenai_dev -h localhost || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres-data:

@@ -21,6 +21,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
     networks:
+      - traefik-public
       - frontend-net
       - recommendations-net
       - metrics-net
@@ -227,6 +228,8 @@ volumes:
   grafana-data:
 
 networks:
+  traefik-public:
+    external: true
   frontend-net:
     name: greenait-frontend-net
   recommendations-net:

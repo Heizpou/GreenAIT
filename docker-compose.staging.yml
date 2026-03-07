@@ -1,0 +1,221 @@
+services:
+  # ---------------- Frontend ----------------
+  frontend:
+    build:
+      context: ./frontend
+      target: production
+    image: staging-greenait-frontend:latest
+    container_name: staging-greenait-frontend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.staging-frontend.rule=Host(`staging.heizpou.com`)"
+      - "traefik.http.routers.staging-frontend.entrypoints=websecure"
+      - "traefik.http.routers.staging-frontend.tls.certresolver=le"
+      - "traefik.http.routers.staging-frontend-http.rule=Host(`staging.heizpou.com`)"
+      - "traefik.http.routers.staging-frontend-http.entrypoints=web"
+      - "traefik.http.routers.staging-frontend-http.middlewares=staging-https-redirect@docker"
+      - "traefik.http.middlewares.staging-https-redirect.redirectscheme.scheme=https"
+      - "traefik.docker.network=traefik-public"
+    networks:
+      - traefik-public
+      - staging-recommendations-net
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost"]
+      interval: 10s
+      retries: 5
+
+  # ---------------- API AI ----------------
+  api-ai:
+    build:
+      context: ./api-ai
+      target: production
+    image: staging-greenait-api-ai:latest
+    container_name: staging-greenait-api-ai
+    networks:
+      - staging-ai-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://127.0.0.1:5000/health || exit 1"]
+      interval: 15s
+      retries: 5
+
+  # ---------------- API Collect Metrics ----------------
+  api-collect-metrics:
+    build:
+      context: ./api-collect-metrics/ApiCollectMetrics
+      target: production
+    image: staging-greenait-api-collect-metrics:latest
+    container_name: staging-greenait-api-collect-metrics
+    environment:
+      ASPNETCORE_URLS: http://0.0.0.0:80
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      DB_USER: ${STAGING_POSTGRES_USER}
+      DB_PASSWORD: ${STAGING_POSTGRES_PASSWORD}
+      DB_NAME: ${STAGING_POSTGRES_DB}
+      DB_HOST: staging-greenait-postgres
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.staging-api-metrics.rule=Host(`metrics.staging.heizpou.com`)"
+      - "traefik.http.routers.staging-api-metrics.entrypoints=websecure"
+      - "traefik.http.routers.staging-api-metrics.tls.certresolver=le"
+      - "traefik.http.services.staging-api-metrics.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik-public"
+    networks:
+      - traefik-public
+      - staging-metrics-net
+      - staging-db-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
+      interval: 10s
+      retries: 5
+
+  # ---------------- API Recommendations ----------------
+  api-recommendations:
+    build:
+      context: ./api-recommendations/ApiRecommendations
+      target: production
+    image: staging-greenait-api-recommendations:latest
+    container_name: staging-greenait-api-recommendations
+    environment:
+      ASPNETCORE_URLS: http://0.0.0.0:80
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      DB_USER: ${STAGING_POSTGRES_USER}
+      DB_PASSWORD: ${STAGING_POSTGRES_PASSWORD}
+      DB_NAME: ${STAGING_POSTGRES_DB}
+      DB_HOST: staging-greenait-postgres
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.staging-api-recommendations.rule=Host(`recommendations.staging.heizpou.com`)"
+      - "traefik.http.routers.staging-api-recommendations.entrypoints=websecure"
+      - "traefik.http.routers.staging-api-recommendations.tls.certresolver=le"
+      - "traefik.http.services.staging-api-recommendations.loadbalancer.server.port=80"
+      - "traefik.docker.network=traefik-public"
+    networks:
+      - traefik-public
+      - staging-recommendations-net
+      - staging-cache-net
+      - staging-db-net
+      - staging-ai-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
+      interval: 10s
+      retries: 5
+
+  # ---------------- Server Simulators ----------------
+  server-simulator-1:
+    build:
+      context: ./server-simulator
+      target: production
+    image: staging-greenait-server-simulator-1:latest
+    container_name: staging-greenait-server-simulator-1
+    environment:
+      SERVER_ID: ${STAGING_SIMULATOR_1_ID}
+    networks:
+      - staging-server-net
+
+  server-simulator-2:
+    build:
+      context: ./server-simulator
+      target: production
+    image: staging-greenait-server-simulator-2:latest
+    container_name: staging-greenait-server-simulator-2
+    environment:
+      SERVER_ID: ${STAGING_SIMULATOR_2_ID}
+    networks:
+      - staging-server-net
+
+  server-simulator-3:
+    build:
+      context: ./server-simulator
+      target: production
+    image: staging-greenait-server-simulator-3:latest
+    container_name: staging-greenait-server-simulator-3
+    environment:
+      SERVER_ID: ${STAGING_SIMULATOR_3_ID}
+    networks:
+      - staging-server-net
+
+  # ---------------- PostgreSQL ----------------
+  greenait-postgres:
+    image: postgres:15-alpine
+    container_name: staging-greenait-postgres
+    environment:
+      POSTGRES_USER: ${STAGING_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${STAGING_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${STAGING_POSTGRES_DB}
+    volumes:
+      - staging-postgres-data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - staging-db-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${STAGING_POSTGRES_USER}"]
+      interval: 10s
+      retries: 5
+
+  # ---------------- Redis ----------------
+  redis:
+    image: redis:7-alpine
+    container_name: staging-greenait-redis
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${STAGING_REDIS_PASSWORD}"]
+    networks:
+      - staging-cache-net
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${STAGING_REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      retries: 5
+
+  # ---------------- Prometheus ----------------
+  prometheus:
+    image: prom/prometheus
+    container_name: staging-greenait-prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - staging-monitoring-net
+      - staging-metrics-net
+      - staging-recommendations-net
+
+  # ---------------- Grafana ----------------
+  grafana:
+    image: grafana/grafana
+    container_name: staging-greenait-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${STAGING_GF_SECURITY_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${STAGING_GF_SECURITY_ADMIN_PASSWORD}
+      GF_SERVER_HTTP_PORT: 3000
+    volumes:
+      - staging-grafana-data:/var/lib/grafana
+    networks:
+      - traefik-public
+      - staging-monitoring-net
+    depends_on:
+      - prometheus
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.staging-grafana.rule=Host(`grafana.staging.heizpou.com`)"
+      - "traefik.http.routers.staging-grafana.entrypoints=websecure"
+      - "traefik.http.routers.staging-grafana.tls.certresolver=le"
+      - "traefik.docker.network=traefik-public"
+
+volumes:
+  staging-postgres-data:
+  staging-grafana-data:
+
+networks:
+  traefik-public:
+    external: true
+  staging-recommendations-net:
+    name: staging-greenait-recommendations-net
+  staging-metrics-net:
+    name: staging-greenait-metrics-net
+  staging-ai-net:
+    name: staging-greenait-ai-net
+  staging-db-net:
+    name: staging-greenait-db-net
+  staging-cache-net:
+    name: staging-greenait-cache-net
+  staging-server-net:
+    name: staging-greenait-server-net
+  staging-monitoring-net:
+    name: staging-greenait-monitoring-net
