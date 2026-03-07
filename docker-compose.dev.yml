@@ -57,16 +57,16 @@ services:
   server-simulator-1:
     container_name: server-simulator-1
     build:
-      context: ./server-simulator
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server-simulator/Dockerfile
     environment:
       SERVER_ID: "srv1"
 
   server-simulator-2:
     container_name: server-simulator-2
     build:
-      context: ./server-simulator
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server-simulator/Dockerfile
     environment:
       SERVER_ID: "srv2"
 

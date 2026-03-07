@@ -128,8 +128,8 @@ services:
   # ---------------- Server Simulators ----------------
   server-simulator-1:
     build:
-      context: ./server-simulator
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server-simulator/Dockerfile
     image: greenait-server-simulator-1:latest
     container_name: greenait-server-simulator-1
     environment:
@@ -139,8 +139,8 @@ services:
 
   server-simulator-2:
     build:
-      context: ./server-simulator
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server-simulator/Dockerfile
     image: greenait-server-simulator-2:latest
     container_name: greenait-server-simulator-2
     environment:
@@ -150,8 +150,8 @@ services:
 
   server-simulator-3:
     build:
-      context: ./server-simulator
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: server-simulator/Dockerfile
     image: greenait-server-simulator-3:latest
     container_name: greenait-server-simulator-3
     environment:
