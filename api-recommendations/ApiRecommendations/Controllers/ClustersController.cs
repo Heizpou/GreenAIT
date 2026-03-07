@@ -1,10 +1,10 @@
-using ApiCollectMetrics.Dtos;
+using ApiRecommendations.Dtos;
 using GreenAIT.Data;
 using GreenAIT.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace ApiCollectMetrics.Controllers;
+namespace ApiRecommendations.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

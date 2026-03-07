@@ -2,7 +2,6 @@ using ApiCollectMetrics.Dtos;
 using GreenAIT.Data;
 using GreenAIT.Data.Entities;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace ApiCollectMetrics.Controllers;
 
@@ -49,43 +48,5 @@ public class MetricsController : ControllerBase
 
         await _db.SaveChangesAsync();
         return Ok();
-    }
-
-    /// <summary>
-    /// Retourne les dernières métriques d'un serveur.
-    /// </summary>
-    [HttpGet("{serverId}")]
-    public async Task<IActionResult> GetByServer(Guid serverId, [FromQuery] int limit = 100)
-    {
-        var exists = await _db.Servers.AnyAsync(s => s.Id == serverId);
-        if (!exists) return NotFound();
-
-        var metrics = await _db.ServerMetrics
-            .Where(m => m.ServerId == serverId)
-            .OrderByDescending(m => m.RecordedAt)
-            .Take(limit)
-            .ToListAsync();
-
-        return Ok(metrics);
-    }
-
-    /// <summary>
-    /// Retourne les métriques d'un serveur dans une plage de temps.
-    /// </summary>
-    [HttpGet("{serverId}/range")]
-    public async Task<IActionResult> GetByServerAndRange(
-        Guid serverId,
-        [FromQuery] DateTime from,
-        [FromQuery] DateTime to)
-    {
-        var exists = await _db.Servers.AnyAsync(s => s.Id == serverId);
-        if (!exists) return NotFound();
-
-        var metrics = await _db.ServerMetrics
-            .Where(m => m.ServerId == serverId && m.RecordedAt >= from && m.RecordedAt <= to)
-            .OrderBy(m => m.RecordedAt)
-            .ToListAsync();
-
-        return Ok(metrics);
     }
 }
