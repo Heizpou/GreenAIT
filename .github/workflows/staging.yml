@@ -89,6 +89,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /home/deploy/GreenAIT
+            git pull origin staging
             export ASPNETCORE_ENVIRONMENT=${{ env.ASPNETCORE_ENVIRONMENT }}
             export STAGING_POSTGRES_USER=${{ env.STAGING_POSTGRES_USER }}
             export STAGING_POSTGRES_PASSWORD=${{ env.STAGING_POSTGRES_PASSWORD }}
