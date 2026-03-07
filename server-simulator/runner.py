@@ -64,6 +64,7 @@ def simulation_loop():
 app = FastAPI(title="Server Simulator Control API")
 
 
+# Schemas
 class RegisterRequest(BaseModel):
     server_id: str
 
