@@ -24,18 +24,20 @@ BACKUP_FILE="$BACKUP_DIR/${POSTGRES_DB}_${TIMESTAMP}.sql.gz"
 LATEST_BACKUP="$BACKUP_DIR/latest.sql.gz"
 
 echo "===== Backup PostgreSQL ====="
-echo "Vérification de l'existence de la DB '$POSTGRES_DB' dans le container $POSTGRES_CONTAINER..."
 
-# Vérifie que la DB existe
+# Vérifie si la DB existe et la crée si nécessaire
+echo "Vérification de l'existence de la DB '$POSTGRES_DB' dans le container $POSTGRES_CONTAINER..."
 DB_EXISTS=$(docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" "$POSTGRES_CONTAINER" \
   psql -U "$POSTGRES_USER" -tAc "SELECT 1 FROM pg_database WHERE datname='$POSTGRES_DB';")
 
 if [ "$DB_EXISTS" != "1" ]; then
-  echo "Erreur : la base de données '$POSTGRES_DB' n'existe pas dans le container $POSTGRES_CONTAINER."
-  exit 1
+  echo "La base '$POSTGRES_DB' n'existe pas, création automatique..."
+  docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" "$POSTGRES_CONTAINER" \
+    psql -U "$POSTGRES_USER" -c "CREATE DATABASE \"$POSTGRES_DB\";"
+  echo "Base '$POSTGRES_DB' créée avec succès."
+else
+  echo "Base de données trouvée, démarrage du dump..."
 fi
-
-echo "Base de données trouvée, démarrage du dump..."
 
 # Exécution du dump
 docker exec -e PGPASSWORD="$POSTGRES_PASSWORD" "$POSTGRES_CONTAINER" \

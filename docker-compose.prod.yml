@@ -84,7 +84,7 @@ services:
       - "traefik.http.routers.api-metrics.entrypoints=websecure"
       - "traefik.http.routers.api-metrics.tls.certresolver=le"
       - "traefik.http.services.api-metrics.loadbalancer.server.port=80"
-      - "traefik.docker.network=metrics-net"
+      - "traefik.docker.network=greenait-metrics-net"
     networks:
       - metrics-net
       - db-net
