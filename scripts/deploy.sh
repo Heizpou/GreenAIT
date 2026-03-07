@@ -30,7 +30,7 @@ if [ ${#MODIFIED_SERVICES[@]} -eq 0 ]; then
   echo "Aucun service modifié → utilisation des images existantes"
 else
   echo "Services à rebuild : ${MODIFIED_SERVICES[*]}"
-  docker compose --env-file /dev/null -f "$COMPOSE_FILE" build --pull "${MODIFIED_SERVICES[@]}"
+  docker compose --project-name greenait --env-file /dev/null -f "$COMPOSE_FILE" build --pull "${MODIFIED_SERVICES[@]}"
 fi
 
 # Tag commit pour rollback
@@ -41,21 +41,21 @@ done
 # Down des containers
 echo "Down des containers et suppression de Traefik"
 docker rm -f traefik || true
-docker compose --env-file /dev/null -f "$COMPOSE_FILE" down --remove-orphans
+docker compose --project-name greenait --env-file /dev/null -f "$COMPOSE_FILE" down --remove-orphans
 
 # Déploiement
 echo "Déploiement des nouveaux containers"
-if docker compose --env-file /dev/null -f "$COMPOSE_FILE" up -d --remove-orphans --wait; then
+if docker compose --project-name greenait --env-file /dev/null -f "$COMPOSE_FILE" up -d --remove-orphans --wait; then
   echo "Déploiement réussi"
   docker image prune -f
 else
   echo "Healthcheck échoué, rollback"
   if [ -n "$PREV_COMMIT" ]; then
-    docker compose --env-file /dev/null -f "$COMPOSE_FILE" down
+    docker compose --project-name greenait --env-file /dev/null -f "$COMPOSE_FILE" down
     for S in "${SERVICES[@]}"; do
       docker tag "$S:$PREV_COMMIT" "$S:latest"
     done
-    docker compose --env-file /dev/null -f "$COMPOSE_FILE" up -d --remove-orphans --wait
+    docker compose --project-name greenait --env-file /dev/null -f "$COMPOSE_FILE" up -d --remove-orphans --wait
     echo "Rollback terminé"
   else
     echo "❌ Aucun commit précédent → rollback impossible"

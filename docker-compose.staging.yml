@@ -3,7 +3,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      target: production
+      dockerfile: Dockerfile
     image: staging-greenait-frontend:latest
     container_name: staging-greenait-frontend
     labels:
@@ -28,7 +28,7 @@ services:
   api-ai:
     build:
       context: ./api-ai
-      target: production
+      dockerfile: Dockerfile
     image: staging-greenait-api-ai:latest
     container_name: staging-greenait-api-ai
     networks:
@@ -42,7 +42,7 @@ services:
   api-collect-metrics:
     build:
       context: ./api-collect-metrics/ApiCollectMetrics
-      target: production
+      dockerfile: Dockerfile
     image: staging-greenait-api-collect-metrics:latest
     container_name: staging-greenait-api-collect-metrics
     environment:
@@ -72,7 +72,7 @@ services:
   api-recommendations:
     build:
       context: ./api-recommendations/ApiRecommendations
-      target: production
+      dockerfile: Dockerfile
     image: staging-greenait-api-recommendations:latest
     container_name: staging-greenait-api-recommendations
     environment:
@@ -104,7 +104,7 @@ services:
   server-simulator-1:
     build:
       context: ./server-simulator
-      target: production
+      dockerfile: Dockerfile
     image: staging-greenait-server-simulator-1:latest
     container_name: staging-greenait-server-simulator-1
     environment:
@@ -115,7 +115,7 @@ services:
   server-simulator-2:
     build:
       context: ./server-simulator
-      target: production
+      dockerfile: Dockerfile
     image: staging-greenait-server-simulator-2:latest
     container_name: staging-greenait-server-simulator-2
     environment:
@@ -126,7 +126,7 @@ services:
   server-simulator-3:
     build:
       context: ./server-simulator
-      target: production
+      dockerfile: Dockerfile
     image: staging-greenait-server-simulator-3:latest
     container_name: staging-greenait-server-simulator-3
     environment:
