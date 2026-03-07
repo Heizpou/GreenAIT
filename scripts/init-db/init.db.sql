@@ -1,0 +1,5 @@
+-- Exemple minimal
+CREATE TABLE IF NOT EXISTS test_table (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL
+);
