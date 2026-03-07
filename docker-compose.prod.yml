@@ -42,7 +42,6 @@ services:
       - "traefik.http.routers.frontend-http.entrypoints=web"
       - "traefik.http.routers.frontend-http.middlewares=https-redirect"
       - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
-      - "traefik.docker.network=frontend-net"
     networks:
       - frontend-net
       - recommendations-net
@@ -85,7 +84,6 @@ services:
       - "traefik.http.services.api-metrics.loadbalancer.server.port=80"
       - "traefik.http.routers.api-metrics.entrypoints=websecure"
       - "traefik.http.routers.api-metrics.tls.certresolver=le"
-      - "traefik.docker.network=metrics-net"
     networks:
       - metrics-net
       - db-net
@@ -114,7 +112,6 @@ services:
       - "traefik.http.services.api-recommendations.loadbalancer.server.port=80"
       - "traefik.http.routers.api-recommendations.entrypoints=websecure"
       - "traefik.http.routers.api-recommendations.tls.certresolver=le"
-      - "traefik.docker.network=recommendations-net"
     networks:
       - recommendations-net
       - cache-net
@@ -221,7 +218,6 @@ services:
       - "traefik.http.routers.grafana.tls.certresolver=le"
       - "traefik.http.routers.grafana.middlewares=grafana-auth"
       - "traefik.http.middlewares.grafana-auth.basicauth.users=Heizpou:$$apr1$$zrQaWquA$$YNifqD/fiqczGgXLqcf0E."
-      - "traefik.docker.network=monitoring-net"
 
 volumes:
   postgres-data:
@@ -229,10 +225,18 @@ volumes:
 
 networks:
   frontend-net:
+    name: greenait-frontend-net
   recommendations-net:
+    name: greenait-recommendations-net
   metrics-net:
+    name: greenait-metrics-net
   ai-net:
+    name: greenait-ai-net
   db-net:
+    name: greenait-db-net
   cache-net:
+    name: greenait-cache-net
   server-net:
+    name: greenait-server-net
   monitoring-net:
+    name: greenait-monitoring-net

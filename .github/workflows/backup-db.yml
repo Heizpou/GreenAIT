@@ -60,7 +60,7 @@ jobs:
       # Etape 2 : Copie de la backup
       - name: Download backup from VPS
         run: |
-          ls /home/deploy/GreenAIT/backups
+          ls
           scp -i ${{ secrets.VPS_SSH_KEY }} ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/deploy/GreenAIT/backups/latest.sql.gz ./latest.sql.gz
 
       # Étape 3 : Upload vers GitHub Actions
