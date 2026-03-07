@@ -44,7 +44,7 @@ jobs:
           echo "${{ secrets.VPS_SSH_KEY }}" > key.pem
           chmod 600 key.pem
 
-          scp -i key.pem ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/deploy/GreenAIT/backups/latest.sql.gz ./backups/latest.sql.gz
+          scp -i key.pem -o StrictHostKeyChecking=no ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/deploy/GreenAIT/backups/latest.sql.gz ./backups/latest.sql.gz
 
           if [ ! -s ./backups/latest.sql.gz ]; then
             echo "Backup vide ou inexistant après download"
