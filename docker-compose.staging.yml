@@ -207,15 +207,36 @@ networks:
     external: true
   staging-recommendations-net:
     name: staging-greenait-recommendations-net
+    ipam:
+      config:
+        - subnet: 10.20.1.0/24
   staging-metrics-net:
     name: staging-greenait-metrics-net
+    ipam:
+      config:
+        - subnet: 10.20.2.0/24
   staging-ai-net:
     name: staging-greenait-ai-net
+    ipam:
+      config:
+        - subnet: 10.20.3.0/24
   staging-db-net:
     name: staging-greenait-db-net
+    ipam:
+      config:
+        - subnet: 10.20.4.0/24
   staging-cache-net:
     name: staging-greenait-cache-net
+    ipam:
+      config:
+        - subnet: 10.20.5.0/24
   staging-server-net:
     name: staging-greenait-server-net
+    ipam:
+      config:
+        - subnet: 10.20.6.0/24
   staging-monitoring-net:
     name: staging-greenait-monitoring-net
+    ipam:
+      config:
+        - subnet: 10.20.7.0/24
