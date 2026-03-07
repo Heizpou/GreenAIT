@@ -121,13 +121,13 @@ jobs:
                   docker build -t api-ai:latest ./api-ai
                   ;;
                 greenait-api-collect-metrics)
-                  docker build -t api-collect-metrics:latest ./api-collect-metrics/ApiCollectMetrics
+                  docker build -t api-collect-metrics:latest -f api-collect-metrics/ApiCollectMetrics/Dockerfile .
                   ;;
                 greenait-api-recommendations)
-                  docker build -t api-recommendations:latest ./api-recommendations/ApiRecommendations
+                  docker build -t api-recommendations:latest -f api-recommendations/ApiRecommendations/Dockerfile .
                   ;;
                 greenait-server-simulator-1|greenait-server-simulator-2|greenait-server-simulator-3)
-                  docker build -t server-simulator:latest ./server-simulator
+                  docker build -t server-simulator:latest -f server-simulator/Dockerfile .
                   ;;
               esac
             done
@@ -146,6 +146,10 @@ jobs:
           curl -f http://localhost:5002/health
           echo "Testing api-recommendations..."
           curl -f http://localhost:5003/health
+          echo "Testing server-simulator-1..."
+          curl -f http://localhost:8081/status
+          echo "Testing server-simulator-2..."
+          curl -f http://localhost:8082/status
           echo "All smoke tests passed ✅"
 
       # --- Stop smoke test containers ---

@@ -7,7 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../shared/GreenAIT.Data/GreenAIT.Data.csproj" />
   </ItemGroup>
 
 </Project>

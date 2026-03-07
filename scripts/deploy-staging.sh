@@ -19,14 +19,34 @@ SERVICES=("staging-greenait-frontend" "staging-greenait-api-ai" "staging-greenai
 "staging-greenait-api-recommendations" "staging-greenait-server-simulator-1" \
 "staging-greenait-server-simulator-2" "staging-greenait-server-simulator-3")
 
+# Retourne true si un service doit être rebuild selon les fichiers modifiés
+service_changed() {
+  local short="$1"
+  local changed
+  changed=$(git diff --name-only HEAD^ HEAD)
+  case "$short" in
+    server-simulator-*)
+      echo "$changed" | grep -qE "^(server-simulator|shared/server-lib)/"
+      ;;
+    api-collect-metrics|api-recommendations)
+      echo "$changed" | grep -qE "^($short|shared/GreenAIT\.Data)/"
+      ;;
+    *)
+      echo "$changed" | grep -q "^$short/"
+      ;;
+  esac
+}
+
 echo "===== Détection des services modifiés ====="
 MODIFIED_SERVICES=()
 for S in "${SERVICES[@]}"; do
-  DIR=${S#staging-greenait-}
-  if git diff --name-only HEAD^ HEAD | grep -q "^$DIR"; then
-    MODIFIED_SERVICES+=("$S")
+  SHORT="${S#staging-greenait-}"
+  if service_changed "$SHORT"; then
+    MODIFIED_SERVICES+=("$SHORT")
   fi
 done
+# Dédoublonner (les 3 simulateurs partagent le même Dockerfile)
+MODIFIED_SERVICES=($(printf '%s\n' "${MODIFIED_SERVICES[@]}" | sort -u))
 
 if [ ${#MODIFIED_SERVICES[@]} -eq 0 ]; then
   echo "Aucun service modifié → utilisation des images existantes"

@@ -46,8 +46,8 @@ services:
   # ---------------- API Collect Metrics ----------------
   api-collect-metrics:
     build:
-      context: ./api-collect-metrics/ApiCollectMetrics
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api-collect-metrics/ApiCollectMetrics/Dockerfile
     container_name: test-api-collect-metrics
     depends_on:
       postgres:
@@ -70,8 +70,8 @@ services:
   # ---------------- API Recommendations ----------------
   api-recommendations:
     build:
-      context: ./api-recommendations/ApiRecommendations
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api-recommendations/ApiRecommendations/Dockerfile
     container_name: test-api-recommendations
     depends_on:
       postgres:
@@ -90,5 +90,42 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
       interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------- Server Simulators ----------------
+  server-simulator-1:
+    build:
+      context: .
+      dockerfile: server-simulator/Dockerfile
+    container_name: test-server-simulator-1
+    depends_on:
+      api-collect-metrics:
+        condition: service_healthy
+    ports:
+      - "8081:8080"
+    environment:
+      METRICS_API_URL: "http://test-api-collect-metrics/api/metrics"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/status || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  server-simulator-2:
+    build:
+      context: .
+      dockerfile: server-simulator/Dockerfile
+    container_name: test-server-simulator-2
+    depends_on:
+      api-collect-metrics:
+        condition: service_healthy
+    ports:
+      - "8082:8080"
+    environment:
+      METRICS_API_URL: "http://test-api-collect-metrics/api/metrics"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/status || exit 1"]
+      interval: 10s
       timeout: 5s
       retries: 5

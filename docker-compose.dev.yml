@@ -19,8 +19,8 @@ services:
   api-collect-metrics:
     container_name: api-collect-metrics
     build:
-      context: ./api-collect-metrics/ApiCollectMetrics
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api-collect-metrics/ApiCollectMetrics/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,8 +37,8 @@ services:
   api-recommendations:
     container_name: api-recommendations
     build:
-      context: ./api-recommendations/ApiRecommendations
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api-recommendations/ApiRecommendations/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,16 +59,36 @@ services:
     build:
       context: .
       dockerfile: server-simulator/Dockerfile
+    depends_on:
+      - api-collect-metrics
+    ports:
+      - "8081:8080"
     environment:
       SERVER_ID: "srv1"
+      METRICS_API_URL: "http://api-collect-metrics/api/metrics"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/status || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
   server-simulator-2:
     container_name: server-simulator-2
     build:
       context: .
       dockerfile: server-simulator/Dockerfile
+    depends_on:
+      - api-collect-metrics
+    ports:
+      - "8082:8080"
     environment:
       SERVER_ID: "srv2"
+      METRICS_API_URL: "http://api-collect-metrics/api/metrics"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/status || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
   postgres:
     image: postgres:15-alpine
