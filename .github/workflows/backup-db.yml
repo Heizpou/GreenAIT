@@ -34,25 +34,23 @@ jobs:
       # ----------------------------
       - name: Backup via SSH sur VPS
         uses: appleboy/ssh-action@v0.1.6
-        env:
-          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-          ASPNETCORE_ENVIRONMENT: ${{ env.ASPNETCORE_ENVIRONMENT }}
-          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
-          LETSENCRYPT_EMAIL: ${{ secrets.LETSENCRYPT_EMAIL }}
-          GF_SECURITY_ADMIN_USER: ${{ secrets.GF_SECURITY_ADMIN_USER }}
-          GF_SECURITY_ADMIN_PASSWORD: ${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}
-          SIMULATOR_1_ID: ${{ secrets.SIMULATOR_1_ID }}
-          SIMULATOR_2_ID: ${{ secrets.SIMULATOR_2_ID }}
-          SIMULATOR_3_ID: ${{ secrets.SIMULATOR_3_ID }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /home/deploy/GreenAIT
-            # Exécute le script backup_db.sh
+            export ASPNETCORE_ENVIRONMENT=${{ env.ASPNETCORE_ENVIRONMENT }}
+            export POSTGRES_USER=${{ env.POSTGRES_USER }}
+            export POSTGRES_PASSWORD=${{ env.POSTGRES_PASSWORD }}
+            export POSTGRES_DB=${{ env.POSTGRES_DB }}
+            export REDIS_PASSWORD=${{ env.REDIS_PASSWORD }}
+            export LETSENCRYPT_EMAIL=${{ env.LETSENCRYPT_EMAIL }}
+            export GF_SECURITY_ADMIN_USER=${{ env.GF_SECURITY_ADMIN_USER }}
+            export GF_SECURITY_ADMIN_PASSWORD=${{ env.GF_SECURITY_ADMIN_PASSWORD }}
+            export SIMULATOR_1_ID=${{ env.SIMULATOR_1_ID }}
+            export SIMULATOR_2_ID=${{ env.SIMULATOR_2_ID }}
+            export SIMULATOR_3_ID=${{ env.SIMULATOR_3_ID }}
             ./scripts/backup_db.sh
 
       # ----------------------------
@@ -64,14 +62,12 @@ jobs:
 
           scp -i key.pem ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/home/deploy/GreenAIT/backups/latest.sql.gz ./backups/latest.sql.gz
 
-          # Vérifie que le backup téléchargé n’est pas vide
           if [ ! -s ./backups/latest.sql.gz ]; then
             echo "Backup vide ou inexistant après download"
             rm -f key.pem
             exit 1
           fi
 
-          # Supprimer la clé temporaire
           rm -f key.pem
 
       # ----------------------------
