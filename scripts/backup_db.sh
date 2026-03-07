@@ -22,22 +22,12 @@ BACKUP_FILE="$BACKUP_DIR/${POSTGRES_DB}_${TIMESTAMP}.sql.gz"
 LATEST_BACKUP="$BACKUP_DIR/latest.sql.gz"
 
 echo "===== Backup PostgreSQL ====="
-
-# ----------------------------
-# Vérifier que le container existe
-# ----------------------------
-CONTAINER_NAME=$(docker-compose --env-file /dev/null -f "$COMPOSE_FILE" ps -q greenait-postgres)
-if [ -z "$CONTAINER_NAME" ]; then
-  echo "Erreur : container greenait-postgres introuvable via docker-compose"
-  exit 1
-fi
-
 echo "Sauvegarde de la DB ${POSTGRES_DB}..."
 
 # ----------------------------
 # Dump directement depuis le container
 # ----------------------------
-docker exec -i "$CONTAINER_NAME" pg_dump -h localhost -U "$POSTGRES_USER" "$POSTGRES_DB" | gzip > "$BACKUP_FILE"
+docker exec -i greenait-postgres pg_dump -h -U "$POSTGRES_USER" "$POSTGRES_DB" | gzip > "$BACKUP_FILE"
 
 echo "Fichier latest.sql.gz présent ?"
 ls -l "$LATEST_BACKUP"
