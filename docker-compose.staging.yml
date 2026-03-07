@@ -41,8 +41,8 @@ services:
   # ---------------- API Collect Metrics ----------------
   api-collect-metrics:
     build:
-      context: ./api-collect-metrics/ApiCollectMetrics
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api-collect-metrics/ApiCollectMetrics/Dockerfile
     image: staging-greenait-api-collect-metrics:latest
     container_name: staging-greenait-api-collect-metrics
     environment:
@@ -71,8 +71,8 @@ services:
   # ---------------- API Recommendations ----------------
   api-recommendations:
     build:
-      context: ./api-recommendations/ApiRecommendations
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api-recommendations/ApiRecommendations/Dockerfile
     image: staging-greenait-api-recommendations:latest
     container_name: staging-greenait-api-recommendations
     environment:
@@ -107,10 +107,26 @@ services:
       dockerfile: server-simulator/Dockerfile
     image: staging-greenait-server-simulator-1:latest
     container_name: staging-greenait-server-simulator-1
+    depends_on:
+      - api-collect-metrics
     environment:
       SERVER_ID: ${STAGING_SIMULATOR_1_ID}
+      METRICS_API_URL: "http://staging-greenait-api-collect-metrics/api/metrics"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.staging-sim-1.rule=Host(`sim1.staging.heizpou.com`)"
+      - "traefik.http.routers.staging-sim-1.entrypoints=websecure"
+      - "traefik.http.routers.staging-sim-1.tls.certresolver=le"
+      - "traefik.http.services.staging-sim-1.loadbalancer.server.port=8080"
+      - "traefik.docker.network=traefik-public"
     networks:
-      - staging-server-net
+      - traefik-public
+      - staging-metrics-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/status || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
   server-simulator-2:
     build:
@@ -118,10 +134,26 @@ services:
       dockerfile: server-simulator/Dockerfile
     image: staging-greenait-server-simulator-2:latest
     container_name: staging-greenait-server-simulator-2
+    depends_on:
+      - api-collect-metrics
     environment:
       SERVER_ID: ${STAGING_SIMULATOR_2_ID}
+      METRICS_API_URL: "http://staging-greenait-api-collect-metrics/api/metrics"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.staging-sim-2.rule=Host(`sim2.staging.heizpou.com`)"
+      - "traefik.http.routers.staging-sim-2.entrypoints=websecure"
+      - "traefik.http.routers.staging-sim-2.tls.certresolver=le"
+      - "traefik.http.services.staging-sim-2.loadbalancer.server.port=8080"
+      - "traefik.docker.network=traefik-public"
     networks:
-      - staging-server-net
+      - traefik-public
+      - staging-metrics-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/status || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
   server-simulator-3:
     build:
@@ -129,10 +161,26 @@ services:
       dockerfile: server-simulator/Dockerfile
     image: staging-greenait-server-simulator-3:latest
     container_name: staging-greenait-server-simulator-3
+    depends_on:
+      - api-collect-metrics
     environment:
       SERVER_ID: ${STAGING_SIMULATOR_3_ID}
+      METRICS_API_URL: "http://staging-greenait-api-collect-metrics/api/metrics"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.staging-sim-3.rule=Host(`sim3.staging.heizpou.com`)"
+      - "traefik.http.routers.staging-sim-3.entrypoints=websecure"
+      - "traefik.http.routers.staging-sim-3.tls.certresolver=le"
+      - "traefik.http.services.staging-sim-3.loadbalancer.server.port=8080"
+      - "traefik.docker.network=traefik-public"
     networks:
-      - staging-server-net
+      - traefik-public
+      - staging-metrics-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/status || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
   # ---------------- PostgreSQL ----------------
   greenait-postgres:
@@ -230,11 +278,6 @@ networks:
     ipam:
       config:
         - subnet: 10.20.5.0/24
-  staging-server-net:
-    name: staging-greenait-server-net
-    ipam:
-      config:
-        - subnet: 10.20.6.0/24
   staging-monitoring-net:
     name: staging-greenait-monitoring-net
     ipam:
