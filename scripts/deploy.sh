@@ -7,7 +7,8 @@ COMPOSE_FILE="$APP_DIR/docker-compose.prod.yml"
 cd "$APP_DIR"
 
 echo "===== Pull du repo ====="
-git pull origin main
+git fetch origin main
+git reset --hard origin/main
 
 NEW_COMMIT=$(git rev-parse --short HEAD)
 PREV_COMMIT=$(git rev-parse --short HEAD^ || true)
