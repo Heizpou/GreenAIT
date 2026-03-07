@@ -7,7 +7,8 @@ COMPOSE_FILE="$APP_DIR/docker-compose.staging.yml"
 cd "$APP_DIR"
 
 echo "===== Pull du repo ====="
-git pull origin staging
+git fetch origin staging
+git reset --hard origin/staging
 
 NEW_COMMIT=$(git rev-parse --short HEAD)
 PREV_COMMIT=$(git rev-parse --short HEAD^ || true)
