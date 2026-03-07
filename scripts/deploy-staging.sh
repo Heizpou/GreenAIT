@@ -32,7 +32,12 @@ if [ ${#MODIFIED_SERVICES[@]} -eq 0 ]; then
   echo "Aucun service modifié → utilisation des images existantes"
 else
   echo "Services à rebuild : ${MODIFIED_SERVICES[*]}"
-  docker compose --project-name greenait-staging --env-file /dev/null -f "$COMPOSE_FILE" build --pull "${MODIFIED_SERVICES[@]}"
+  # docker compose utilise le nom de service (sans préfixe staging-greenait-)
+  BUILD_TARGETS=()
+  for S in "${MODIFIED_SERVICES[@]}"; do
+    BUILD_TARGETS+=("${S#staging-greenait-}")
+  done
+  docker compose --project-name greenait-staging --env-file /dev/null -f "$COMPOSE_FILE" build --pull "${BUILD_TARGETS[@]}"
 fi
 
 # Tag commit pour rollback
