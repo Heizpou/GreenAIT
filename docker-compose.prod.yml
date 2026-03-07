@@ -21,6 +21,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./letsencrypt:/letsencrypt
     networks:
+      - traefik-public
       - frontend-net
       - recommendations-net
       - metrics-net
@@ -30,7 +31,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      target: production
+      dockerfile: Dockerfile
     image: greenait-frontend:latest
     container_name: greenait-frontend
     labels:
@@ -54,7 +55,7 @@ services:
   api-ai:
     build:
       context: ./api-ai
-      target: production
+      dockerfile: Dockerfile
     image: greenait-api-ai:latest
     container_name: greenait-api-ai
     networks:
@@ -68,7 +69,7 @@ services:
   api-collect-metrics:
     build:
       context: ./api-collect-metrics/ApiCollectMetrics
-      target: production
+      dockerfile: Dockerfile
     image: greenait-api-collect-metrics:latest
     container_name: greenait-api-collect-metrics
     environment:
@@ -97,7 +98,7 @@ services:
   api-recommendations:
     build:
       context: ./api-recommendations/ApiRecommendations
-      target: production
+      dockerfile: Dockerfile
     image: greenait-api-recommendations:latest
     container_name: greenait-api-recommendations
     environment:
@@ -127,8 +128,8 @@ services:
   # ---------------- Server Simulators ----------------
   server-simulator-1:
     build:
-      context: ./server-simulator
-      target: production
+      context: .
+      dockerfile: server-simulator/Dockerfile
     image: greenait-server-simulator-1:latest
     container_name: greenait-server-simulator-1
     environment:
@@ -138,8 +139,8 @@ services:
 
   server-simulator-2:
     build:
-      context: ./server-simulator
-      target: production
+      context: .
+      dockerfile: server-simulator/Dockerfile
     image: greenait-server-simulator-2:latest
     container_name: greenait-server-simulator-2
     environment:
@@ -149,8 +150,8 @@ services:
 
   server-simulator-3:
     build:
-      context: ./server-simulator
-      target: production
+      context: .
+      dockerfile: server-simulator/Dockerfile
     image: greenait-server-simulator-3:latest
     container_name: greenait-server-simulator-3
     environment:
@@ -227,6 +228,8 @@ volumes:
   grafana-data:
 
 networks:
+  traefik-public:
+    external: true
   frontend-net:
     name: greenait-frontend-net
   recommendations-net:

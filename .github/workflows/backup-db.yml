@@ -6,17 +6,9 @@ on:
     - cron: "0 2 * * *" # Tous les jours à 2h du matin
 
 env:
-  ASPNETCORE_ENVIRONMENT: production
   POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
   POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
   POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-  REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
-  LETSENCRYPT_EMAIL: ${{ secrets.LETSENCRYPT_EMAIL }}
-  GF_SECURITY_ADMIN_USER: ${{ secrets.GF_SECURITY_ADMIN_USER }}
-  GF_SECURITY_ADMIN_PASSWORD: ${{ secrets.GF_SECURITY_ADMIN_PASSWORD }}
-  SIMULATOR_1_ID: ${{ secrets.SIMULATOR_1_ID }}
-  SIMULATOR_2_ID: ${{ secrets.SIMULATOR_2_ID }}
-  SIMULATOR_3_ID: ${{ secrets.SIMULATOR_3_ID }}
 
 jobs:
   backup:
@@ -40,17 +32,9 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd /home/deploy/GreenAIT
-            export ASPNETCORE_ENVIRONMENT=${{ env.ASPNETCORE_ENVIRONMENT }}
             export POSTGRES_USER=${{ env.POSTGRES_USER }}
             export POSTGRES_PASSWORD=${{ env.POSTGRES_PASSWORD }}
             export POSTGRES_DB=${{ env.POSTGRES_DB }}
-            export REDIS_PASSWORD=${{ env.REDIS_PASSWORD }}
-            export LETSENCRYPT_EMAIL=${{ env.LETSENCRYPT_EMAIL }}
-            export GF_SECURITY_ADMIN_USER=${{ env.GF_SECURITY_ADMIN_USER }}
-            export GF_SECURITY_ADMIN_PASSWORD=${{ env.GF_SECURITY_ADMIN_PASSWORD }}
-            export SIMULATOR_1_ID=${{ env.SIMULATOR_1_ID }}
-            export SIMULATOR_2_ID=${{ env.SIMULATOR_2_ID }}
-            export SIMULATOR_3_ID=${{ env.SIMULATOR_3_ID }}
             ./scripts/backup_db.sh
 
       # ----------------------------
